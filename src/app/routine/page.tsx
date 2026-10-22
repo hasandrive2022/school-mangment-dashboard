@@ -1,0 +1,169 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+
+type Row = Record<string, unknown> & { id: string };
+const days = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার"];
+
+export default function RoutinePage() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [classes, setClasses] = useState<Row[]>([]);
+  const [subjects, setSubjects] = useState<Row[]>([]);
+  const [form, setForm] = useState({
+    classId: "",
+    subjectId: "",
+    dayOfWeek: "0",
+    period: "1",
+    room: "",
+  });
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    void Promise.all([
+      fetch("/api/backend/academics/classes"),
+      fetch("/api/backend/academics/subjects"),
+      fetch("/api/backend/routine"),
+    ]).then(async ([classResponse, subjectResponse, routineResponse]) => {
+      const [classData, subjectData, routineData] = await Promise.all([
+        classResponse.json() as Promise<{ data?: Row[] }>,
+        subjectResponse.json() as Promise<{ data?: Row[] }>,
+        routineResponse.json() as Promise<{ data?: Row[] }>,
+      ]);
+      setClasses(classData.data ?? []);
+      setSubjects(subjectData.data ?? []);
+      setRows(routineData.data ?? []);
+    });
+  }, []);
+  async function create() {
+    const response = await fetch("/api/backend/routine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        value: {
+          ...form,
+          period: Number(form.period),
+          dayOfWeek: Number(form.dayOfWeek),
+        },
+      }),
+    });
+    setMessage(
+      response.ok ? "রুটিন slot যোগ হয়েছে" : "রুটিন সংরক্ষণ করা যায়নি",
+    );
+    if (response.ok) {
+      const payload = (await response.json()) as { data?: Row };
+      if (payload.data) setRows((items) => [...items, payload.data as Row]);
+    }
+  }
+  return (
+    <main className="admin-page">
+      <div className="admin-page-inner">
+        <div className="admin-page-heading">
+          <div>
+            <p>Academic schedule</p>
+            <h1>ক্লাস রুটিন</h1>
+          </div>
+          <span className="admin-helper">
+            দিন ও period অনুযায়ী slot তৈরি করুন
+          </span>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>নতুন routine slot</CardTitle>
+          </CardHeader>
+          <CardContent className="routine-form">
+            <Select
+              value={form.classId}
+              onChange={(event) =>
+                setForm({ ...form, classId: event.target.value })
+              }
+            >
+              <option value="">শ্রেণি নির্বাচন</option>
+              {classes.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {String(row.nameBn)}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={form.subjectId}
+              onChange={(event) =>
+                setForm({ ...form, subjectId: event.target.value })
+              }
+            >
+              <option value="">বিষয় নির্বাচন</option>
+              {subjects.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {String(row.nameBn)}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={form.dayOfWeek}
+              onChange={(event) =>
+                setForm({ ...form, dayOfWeek: event.target.value })
+              }
+            >
+              {days.map((day, index) => (
+                <option key={day} value={index}>
+                  {day}
+                </option>
+              ))}
+            </Select>
+            <Input
+              type="number"
+              min="1"
+              max="10"
+              placeholder="Period"
+              value={form.period}
+              onChange={(event) =>
+                setForm({ ...form, period: event.target.value })
+              }
+            />
+            <Input
+              placeholder="কক্ষ (ঐচ্ছিক)"
+              value={form.room}
+              onChange={(event) =>
+                setForm({ ...form, room: event.target.value })
+              }
+            />
+            <Button onClick={() => void create()}>Slot সংরক্ষণ</Button>
+            {message && <p className="text-accent-600">{message}</p>}
+          </CardContent>
+        </Card>
+        <Card className="mt-5">
+          <CardHeader>
+            <CardTitle>রুটিন প্রিভিউ</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="routine-board">
+              {days.map((day, index) => (
+                <section key={day}>
+                  <h3>{day}</h3>
+                  {rows
+                    .filter((row) => Number(row.dayOfWeek) === index)
+                    .sort((a, b) => Number(a.period) - Number(b.period))
+                    .map((row) => (
+                      <article key={row.id}>
+                        <b>Period {String(row.period)}</b>
+                        <span>{String(row.subjectNameBn ?? "বিষয়")}</span>
+                        <small>
+                          {String(row.classNameBn ?? "—")}
+                          {row.room ? ` · ${String(row.room)}` : ""}
+                        </small>
+                      </article>
+                    ))}
+                  {!rows.some((row) => Number(row.dayOfWeek) === index) && (
+                    <p>slot নেই</p>
+                  )}
+                </section>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
+}

@@ -1,16 +1,214 @@
 "use client";
-
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { generateReactHelpers } from "@uploadthing/react";
+import type { UploadRouter } from "@/app/api/uploadthing/core";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-type School = { nameBn: string; nameEn: string; eiin: string; address: string; foundedYear: string | null; logoUrl: string | null; themeColor: string };
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+type School = {
+  nameBn: string;
+  nameEn: string;
+  eiin: string;
+  foundedYear?: string;
+  address: string;
+  logoUrl?: string;
+  themeColor: string;
+};
+const { useUploadThing } = generateReactHelpers<UploadRouter>();
 export default function SettingsPage() {
   const router = useRouter();
-  const [school, setSchool] = useState<School>({ nameBn: "", nameEn: "", eiin: "", address: "", foundedYear: "", logoUrl: "", themeColor: "#21699D" });
+  const [school, setSchool] = useState<School>({
+    nameBn: "",
+    nameEn: "",
+    eiin: "",
+    foundedYear: "",
+    address: "",
+    logoUrl: "",
+    themeColor: "#0F3151",
+  });
   const [message, setMessage] = useState("");
-  useEffect(() => { void fetch("/api/school-settings").then((response) => response.json()).then((payload: { data?: { school?: School } }) => { if (payload.data?.school) setSchool(payload.data.school); }); }, []);
-  async function save(event: FormEvent) { event.preventDefault(); setMessage("সংরক্ষণ করা হচ্ছে…"); const response = await fetch("/api/school-settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(school) }); setMessage(response.ok ? "সেটিংস সফলভাবে সংরক্ষিত হয়েছে।" : "সেটিংস সংরক্ষণ করা যায়নি।"); }
-  return <main className="min-h-screen bg-neutral-50 p-4 md:p-8"><div className="mx-auto max-w-[1200px]"><button type="button" onClick={() => router.push("/dashboard")} className="mb-5 text-sm text-primary-600">← ড্যাশবোর্ডে ফিরুন</button><div className="mb-6"><h1 className="text-2xl font-bold text-primary-800">বিদ্যালয়ের সেটিংস</h1><p className="text-sm text-neutral-600">FR-1.1 অনুযায়ী প্রতিষ্ঠানের পরিচয় ও ব্র্যান্ডিং পরিবর্তন করুন।</p></div><form onSubmit={save} className="grid gap-6 rounded-lg border border-neutral-200 bg-white p-5 md:grid-cols-2 md:p-8"><Field label="বাংলা নাম" value={school.nameBn} onChange={(value) => setSchool({ ...school, nameBn: value })} required /><Field label="ইংরেজি নাম" value={school.nameEn} onChange={(value) => setSchool({ ...school, nameEn: value })} required /><Field label="EIIN" value={school.eiin} onChange={(value) => setSchool({ ...school, eiin: value })} required /><Field label="প্রতিষ্ঠার বছর" value={school.foundedYear ?? ""} onChange={(value) => setSchool({ ...school, foundedYear: value })} /><label className="space-y-2 text-sm font-semibold">ঠিকানা<textarea value={school.address} onChange={(event) => setSchool({ ...school, address: event.target.value })} className="min-h-24 w-full rounded-md border border-neutral-200 px-3 py-2 font-normal outline-none focus:border-primary-600" /></label><Field label="লোগো URL" value={school.logoUrl ?? ""} onChange={(value) => setSchool({ ...school, logoUrl: value })} /><label className="space-y-2 text-sm font-semibold">প্রধান থিম রং<div className="flex gap-3"><input type="color" value={school.themeColor} onChange={(event) => setSchool({ ...school, themeColor: event.target.value })} className="h-10 w-14" /><input value={school.themeColor} onChange={(event) => setSchool({ ...school, themeColor: event.target.value })} className="h-10 flex-1 rounded-md border border-neutral-200 px-3 font-normal" /></div></label><div className="md:col-span-2 flex items-center gap-4"><Button type="submit">সেটিংস সংরক্ষণ করুন</Button>{message && <p className="text-sm text-neutral-600">{message}</p>}</div></form></div></main>;
+  const { startUpload, isUploading } = useUploadThing("schoolBranding", {
+    onClientUploadComplete: (files) =>
+      setSchool((current) => ({ ...current, logoUrl: files[0]?.url ?? "" })),
+  });
+  useEffect(() => {
+    void fetch("/api/school-settings")
+      .then((r) => r.json())
+      .then((p: { data?: School }) => {
+        if (p.data) setSchool(p.data);
+      });
+  }, []);
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    const response = await fetch("/api/school-settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(school),
+    });
+    setMessage(
+      response.ok ? "সেটিংস সংরক্ষণ করা হয়েছে" : "সংরক্ষণ করা যায়নি",
+    );
+  }
+  return (
+    <main className="settings-page">
+      <div className="settings-container">
+        <Button variant="link" onClick={() => router.push("/dashboard")}>
+          ← ড্যাশবোর্ডে ফিরুন
+        </Button>
+        <div className="admin-page-heading">
+          <div>
+            <p>প্রতিষ্ঠান পরিচিতি</p>
+            <h1>বিদ্যালয়ের সেটিংস</h1>
+          </div>
+          <Badge variant="success">লাইভ থিম</Badge>
+        </div>
+        <div className="settings-layout">
+          <form onSubmit={save}>
+            <Card>
+              <CardHeader>
+                <CardTitle>বিদ্যালয়ের তথ্য</CardTitle>
+                <p>
+                  পাবলিক সাইট, header, footer ও print documents-এ ব্যবহৃত হবে।
+                </p>
+              </CardHeader>
+              <CardContent className="settings-form">
+                <Field
+                  label="বাংলা নাম"
+                  value={school.nameBn}
+                  onChange={(value) => setSchool({ ...school, nameBn: value })}
+                />
+                <Field
+                  label="ইংরেজি নাম"
+                  value={school.nameEn}
+                  onChange={(value) => setSchool({ ...school, nameEn: value })}
+                />
+                <Field
+                  label="EIIN"
+                  value={school.eiin}
+                  onChange={(value) => setSchool({ ...school, eiin: value })}
+                />
+                <Field
+                  label="প্রতিষ্ঠার বছর"
+                  value={school.foundedYear ?? ""}
+                  onChange={(value) =>
+                    setSchool({ ...school, foundedYear: value })
+                  }
+                />
+                <label className="settings-wide">
+                  ঠিকানা
+                  <Textarea
+                    value={school.address}
+                    onChange={(event) =>
+                      setSchool({ ...school, address: event.target.value })
+                    }
+                  />
+                </label>
+                <label>
+                  লোগো/সিল আপলোড
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={isUploading}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void startUpload([file]);
+                    }}
+                  />
+                  {school.logoUrl && (
+                    <small className="settings-success">
+                      UploadThing-এ সংরক্ষিত
+                    </small>
+                  )}
+                </label>
+                <Field
+                  label="লোগো URL"
+                  value={school.logoUrl ?? ""}
+                  onChange={(value) => setSchool({ ...school, logoUrl: value })}
+                />
+                <label>
+                  থিম রং
+                  <Input
+                    type="color"
+                    value={school.themeColor}
+                    onChange={(event) =>
+                      setSchool({ ...school, themeColor: event.target.value })
+                    }
+                  />
+                </label>
+                <Button type="submit" disabled={isUploading}>
+                  সেটিংস সংরক্ষণ করুন
+                </Button>
+                {message && (
+                  <p className="settings-wide settings-success">{message}</p>
+                )}
+              </CardContent>
+            </Card>
+          </form>
+          <aside className="settings-aside">
+            <Card>
+              <CardHeader>
+                <CardTitle>ব্র্যান্ড প্রিভিউ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="theme-preview"
+                  style={{ borderTopColor: school.themeColor }}
+                >
+                  <div className="theme-logo">
+                    {school.logoUrl ? (
+                      <img src={school.logoUrl} alt="বিদ্যালয়ের লোগো" />
+                    ) : (
+                      <span>আ</span>
+                    )}
+                  </div>
+                  <b>{school.nameBn || "বিদ্যালয়ের নাম"}</b>
+                  <small>{school.nameEn || "School name"}</small>
+                  <span>EIIN {school.eiin || "—"}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="mt-5">
+              <CardHeader>
+                <CardTitle>হোমপেজ সেটিংস</CardTitle>
+              </CardHeader>
+              <CardContent className="settings-links">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/content")}
+                >
+                  ব্লক, মেনু ও সার্ভিস বক্স
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/admissions")}
+                >
+                  ভর্তি ফর্মের fields
+                </Button>
+                <small>পরিবর্তন করলে public portal-এ live প্রতিফলিত হবে।</small>
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
 }
-function Field({ label, value, onChange, required }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) { return <label className="space-y-2 text-sm font-semibold">{label}<input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full rounded-md border border-neutral-200 px-3 font-normal outline-none focus:border-primary-600" /></label>; }
+function Field({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label>
+      {label}
+      <Input value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}

@@ -1,27 +1,246 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 "use client";
-
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { generateReactHelpers } from "@uploadthing/react";
+import type { UploadRouter } from "@/app/api/uploadthing/core";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 type Item = Record<string, unknown> & { id: string };
 const tabs = [
-  ["homepageBlocks", "হোমপেজ ব্লক"], ["menus", "মেনু"], ["serviceBoxes", "সেবা বক্স"], ["pages", "তথ্য পেজ"], ["notices", "বিজ্ঞপ্তি"], ["news", "খবর"], ["events", "ইভেন্ট"], ["galleries", "গ্যালারি"], ["downloads", "ডাউনলোড"], ["importantLinks", "গুরুত্বপূর্ণ লিংক"], ["quotes", "উক্তি"], ["messages", "বাণী"], ["banners", "ব্যানার"],
+  ["homepageBlocks", "হোমপেজ ব্লক"],
+  ["menus", "মেনু"],
+  ["serviceBoxes", "সেবা বক্স"],
+  ["pages", "তথ্য পেজ"],
+  ["notices", "বিজ্ঞপ্তি"],
+  ["news", "খবর"],
+  ["events", "ইভেন্ট"],
+  ["galleries", "গ্যালারি"],
+  ["downloads", "ডাউনলোড"],
+  ["importantLinks", "গুরুত্বপূর্ণ লিংক"],
+  ["quotes", "উক্তি"],
+  ["messages", "বাণী"],
+  ["banners", "ব্যানার"],
 ] as const;
+const { useUploadThing } = generateReactHelpers<UploadRouter>();
 
 export default function ContentManagementPage() {
   const [tab, setTab] = useState<string>(tabs[0][0]);
   const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState<Record<string, string | boolean>>({ titleBn: "", body: "", category: "general", isPublished: false, isEnabled: true, isPinned: false, showTicker: true, audience: "public", publishAt: "", expiresAt: "" });
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    category: "general",
+    published: false,
+    enabled: true,
+  });
   const [message, setMessage] = useState("");
-  const label = tabs.find(([key]) => key === tab)?.[1] ?? "কনটেন্ট";
-
-  useEffect(() => { void fetch(`/api/content/${tab}`).then((response) => response.json()).then((payload: { data?: Item[] }) => setItems(payload.data ?? [])).finally(() => setLoading(false)); }, [tab]);
-  function input(name: string, value: string | boolean) { setForm((current) => ({ ...current, [name]: value })); }
-  async function create(event: FormEvent) { event.preventDefault(); const value: Record<string, unknown> = { ...form }; if (tab === "pages") Object.assign(value, { slug: String(form.titleBn).trim().toLowerCase().replace(/\s+/g, "-") || `page-${Date.now()}`, isPublished: form.isPublished }); if (tab === "homepageBlocks") Object.assign(value, { key: `block-${Date.now()}`, orderIndex: items.length }); if (tab === "menus") Object.assign(value, { name: form.titleBn }); if (tab === "serviceBoxes") Object.assign(value, { icon: "grid", orderIndex: items.length }); if (tab === "banners") Object.assign(value, { imageUrl: form.body }); if (tab === "galleries") Object.assign(value, { coverUrl: form.body }); if (tab === "downloads") Object.assign(value, { fileUrl: form.body }); if (tab === "importantLinks") Object.assign(value, { url: form.body }); if (tab === "events") Object.assign(value, { startsAt: form.publishAt || new Date().toISOString() }); const response = await fetch(`/api/content/${tab}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value }) }); setMessage(response.ok ? `${label} তৈরি হয়েছে।` : "সংরক্ষণ করা যায়নি।"); if (response.ok) { const payload = await response.json() as { data?: Item }; if (payload.data) setItems((current) => [...current, payload.data as Item]); setForm({ titleBn: "", body: "", category: "general", isPublished: false, isEnabled: true, isPinned: false, showTicker: true, audience: "public", publishAt: "", expiresAt: "" }); } }
-  async function update(item: Item, patch: Record<string, unknown>) { const response = await fetch(`/api/content/${tab}/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value: patch }) }); if (response.ok) setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, ...patch } : entry)); }
-  async function move(item: Item, direction: -1 | 1) { const current = Number(item.orderIndex ?? 0); await update(item, { orderIndex: Math.max(0, current + direction) }); }
-
-  return <main className="min-h-screen bg-neutral-50 p-4 md:p-8"><div className="mx-auto max-w-[1200px]"><div className="mb-6"><h1 className="text-2xl font-bold text-primary-800">ওয়েবসাইট কনটেন্ট</h1><p className="text-sm text-neutral-600">হোমপেজের প্রতিটি ব্লক, মেনু ও প্রকাশনা Admin নিয়ন্ত্রণ করেন।</p></div><div className="mb-6 flex gap-2 overflow-x-auto border-b border-neutral-200 pb-2">{tabs.map(([key, title]) => <button key={key} type="button" onClick={() => setTab(key)} className={`whitespace-nowrap rounded-md px-3 py-2 text-sm ${tab === key ? "bg-primary-600 text-white" : "text-neutral-600 hover:bg-primary-50"}`}>{title}</button>)}</div><form onSubmit={create} className="mb-6 grid gap-3 rounded-lg border border-neutral-200 bg-white p-5 md:grid-cols-4"><Field label={tab === "menus" ? "মেনুর নাম" : "শিরোনাম"} value={String(form.titleBn)} onChange={(value) => input("titleBn", value)} /><Field label={tab === "banners" ? "ছবির URL" : "বিবরণ"} value={String(form.body)} onChange={(value) => input("body", value)} /><Field label="বিভাগ" value={String(form.category)} onChange={(value) => input("category", value)} /><label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={Boolean(form.isPublished)} onChange={(event) => input("isPublished", event.target.checked)} /> প্রকাশিত</label>{tab === "notices" && <><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(form.isPinned)} onChange={(event) => input("isPinned", event.target.checked)} /> পিন</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(form.showTicker)} onChange={(event) => input("showTicker", event.target.checked)} /> টিকার</label><Field label="প্রকাশের সময়" value={String(form.publishAt)} onChange={(value) => input("publishAt", value)} /><Field label="মেয়াদ শেষ" value={String(form.expiresAt)} onChange={(value) => input("expiresAt", value)} /></>}<div className="md:col-span-4"><Button type="submit">+ নতুন {label}</Button>{message && <span className="ml-4 text-sm text-accent-600">{message}</span>}</div></form><section className="rounded-lg border border-neutral-200 bg-white p-4">{loading ? <p className="p-6 text-neutral-600">লোড হচ্ছে…</p> : items.length === 0 ? <p className="p-6 text-neutral-600">কোনো কনটেন্ট নেই।</p> : <div className="divide-y divide-neutral-200">{items.sort((a, b) => Number(a.orderIndex ?? 0) - Number(b.orderIndex ?? 0)).map((item, index) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><p className="font-semibold text-primary-800">{String(item.titleBn ?? item.name ?? item.labelBn ?? item.key ?? `আইটেম ${index + 1}`)}</p><p className="text-xs text-neutral-600">ক্রম: {String(item.orderIndex ?? index + 1)}</p></div><div className="flex flex-wrap items-center gap-2">{("isEnabled" in item || tab === "homepageBlocks") && <button type="button" onClick={() => void update(item, { isEnabled: !item.isEnabled })} className={`rounded-full px-3 py-1 text-xs font-semibold ${item.isEnabled ? "bg-green-100 text-accent-600" : "bg-neutral-100 text-neutral-600"}`}>{item.isEnabled ? "চালু" : "বন্ধ"}</button>}{"isPublished" in item && <button type="button" onClick={() => void update(item, { isPublished: !item.isPublished })} className={`rounded-full px-3 py-1 text-xs font-semibold ${item.isPublished ? "bg-green-100 text-accent-600" : "bg-amber-100 text-warning-600"}`}>{item.isPublished ? "প্রকাশিত" : "খসড়া"}</button>}{tab === "homepageBlocks" && <><button type="button" onClick={() => void move(item, -1)} className="rounded border px-2 py-1 text-xs">↑</button><button type="button" onClick={() => void move(item, 1)} className="rounded border px-2 py-1 text-xs">↓</button></>}</div></div>)}</div>}</section></div></main>;
+  const uploadKind =
+    tab === "galleries" || tab === "banners"
+      ? "galleryImage"
+      : tab === "downloads"
+        ? "downloadFile"
+        : tab === "notices"
+          ? "noticeAttachment"
+          : null;
+  const { startUpload, isUploading } = useUploadThing(
+    uploadKind ?? "galleryImage",
+    {
+      onClientUploadComplete: (files) =>
+        setForm((current) => ({ ...current, body: files[0]?.url ?? "" })),
+    },
+  );
+  async function load() {
+    const payload = (await (await fetch(`/api/content/${tab}`)).json()) as {
+      data?: Item[];
+    };
+    setItems(payload.data ?? []);
+  }
+  useEffect(() => {
+    void load();
+  }, [tab]);
+  async function create(event: React.FormEvent) {
+    event.preventDefault();
+    const value: Record<string, unknown> = {
+      titleBn: form.title,
+      body: form.body,
+      details: form.body,
+      category: form.category,
+      isPublished: form.published,
+      isEnabled: form.enabled,
+      key: `block-${Date.now()}`,
+      orderIndex: items.length,
+      name: form.title,
+      fileUrl: form.body,
+      imageUrl: form.body,
+      coverUrl: form.body,
+      url: form.body,
+      labelBn: form.title,
+      textBn: form.body,
+      startsAt: new Date().toISOString(),
+    };
+    const response = await fetch(`/api/content/${tab}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value }),
+    });
+    setMessage(response.ok ? "সংরক্ষণ হয়েছে" : "সংরক্ষণ করা যায়নি");
+    if (response.ok) {
+      setForm({
+        title: "",
+        body: "",
+        category: "general",
+        published: false,
+        enabled: true,
+      });
+      await load();
+    }
+  }
+  async function update(item: Item, value: Record<string, unknown>) {
+    const response = await fetch(`/api/content/${tab}/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value }),
+    });
+    if (response.ok)
+      setItems((current) =>
+        current.map((row) => (row.id === item.id ? { ...row, ...value } : row)),
+      );
+  }
+  const needsRichText = [
+    "pages",
+    "notices",
+    "news",
+    "events",
+    "quotes",
+    "messages",
+  ].includes(tab);
+  return (
+    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
+      <div className="mx-auto max-w-[1200px]">
+        <h1 className="text-2xl font-bold text-primary-800">
+          ওয়েবসাইট কনটেন্ট
+        </h1>
+        <div className="my-6 flex gap-2 overflow-x-auto border-b pb-2">
+          {tabs.map(([key, label]) => (
+            <Button
+              key={key}
+              size="sm"
+              type="button"
+              variant={tab === key ? "default" : "ghost"}
+              onClick={() => setTab(key)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <form
+          onSubmit={create}
+          className="mb-6 grid gap-3 rounded-lg border bg-white p-5 md:grid-cols-4"
+        >
+          <Input
+            placeholder="শিরোনাম"
+            value={form.title}
+            onChange={(event) =>
+              setForm({ ...form, title: event.target.value })
+            }
+          />
+          {needsRichText ? (
+            <div className="md:col-span-4">
+              <label className="mb-2 block text-sm font-semibold text-primary-800">
+                বিবরণ
+              </label>
+              <RichTextEditor
+                value={form.body}
+                onChange={(body) => setForm({ ...form, body })}
+              />
+            </div>
+          ) : (
+            <Input
+              placeholder="বিবরণ/URL"
+              value={form.body}
+              onChange={(event) =>
+                setForm({ ...form, body: event.target.value })
+              }
+            />
+          )}
+          {uploadKind && (
+            <Input
+              type="file"
+              disabled={isUploading}
+              accept={
+                uploadKind === "galleryImage"
+                  ? "image/jpeg,image/png,image/webp"
+                  : undefined
+              }
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void startUpload([file]);
+              }}
+            />
+          )}
+          <Input
+            placeholder="বিভাগ"
+            value={form.category}
+            onChange={(event) =>
+              setForm({ ...form, category: event.target.value })
+            }
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <Switch
+              checked={form.published}
+              onCheckedChange={(value) =>
+                setForm({ ...form, published: value })
+              }
+            />{" "}
+            প্রকাশিত
+          </label>
+          <Button type="submit" disabled={isUploading}>
+            নতুন রেকর্ড
+          </Button>
+          {message && <p className="text-accent-600">{message}</p>}
+        </form>
+        <section className="rounded-lg border bg-white p-5">
+          {items.length === 0 ? (
+            <p>কোনো রেকর্ড নেই।</p>
+          ) : (
+            items.map((item) => (
+              <div
+                className="flex items-center justify-between border-b py-3"
+                key={item.id}
+              >
+                <span>
+                  {String(
+                    item.titleBn ??
+                      item.name ??
+                      item.labelBn ??
+                      item.key ??
+                      item.id,
+                  )}
+                </span>
+                <div className="flex items-center gap-2">
+                  {("isEnabled" in item || tab === "homepageBlocks") && (
+                    <>
+                      <Switch
+                        checked={Boolean(item.isEnabled)}
+                        onCheckedChange={(value) =>
+                          void update(item, { isEnabled: value })
+                        }
+                      />
+                      <Badge variant={item.isEnabled ? "success" : "secondary"}>
+                        {item.isEnabled ? "চালু" : "বন্ধ"}
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+      </div>
+    </main>
+  );
 }
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="space-y-1 text-sm font-semibold">{label}<input value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-neutral-200 px-3 font-normal outline-none focus:border-primary-600" /></label>; }

@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
     : await getSession();
 
   if (!session) {
-    const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const response = NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
     response.cookies.set(SESSION_COOKIE_NAME, "", clearSessionCookie());
     return response;
   }

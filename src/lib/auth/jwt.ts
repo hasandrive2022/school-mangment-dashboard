@@ -14,8 +14,7 @@ export async function signSessionToken(payload: {
   email: string;
 }): Promise<string> {
   const maxAge = getSessionMaxAgeSeconds();
-  return await new jose
-    .SignJWT({ email: payload.email })
+  return await new jose.SignJWT({ email: payload.email })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -43,7 +42,13 @@ export async function verifySessionToken(
     const role = payload.role;
     const displayNameBn = payload.displayNameBn;
     const tokenType = payload.tokenType;
-    if (typeof sub !== "string" || typeof schoolId !== "string" || (role !== "ADMIN" && role !== "TEACHER" && role !== "STUDENT") || typeof displayNameBn !== "string" || tokenType !== "access") {
+    if (
+      typeof sub !== "string" ||
+      typeof schoolId !== "string" ||
+      (role !== "ADMIN" && role !== "TEACHER" && role !== "STUDENT") ||
+      typeof displayNameBn !== "string" ||
+      tokenType !== "access"
+    ) {
       return null;
     }
     return { sub, schoolId, role, displayNameBn, tokenType };
