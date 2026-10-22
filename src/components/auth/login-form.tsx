@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -20,7 +20,7 @@ export function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
       const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
@@ -39,19 +39,18 @@ export function LoginForm() {
   return (
     <div>
       <div className="mb-9">
-        <p className="mb-3 font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">Welcome back</p>
-        <h2 className="font-serif text-4xl tracking-tight text-foreground">Admin sign in</h2>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">Enter your credentials to access the Aurelia workspace.</p>
+        <p className="mb-3 text-xs tracking-[0.2em] text-muted-foreground uppercase">স্বাগতম</p>
+        <h2 className="text-3xl font-bold tracking-tight text-primary-800">প্রশাসন প্যানেলে লগইন</h2>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">প্রশাসক বা শিক্ষক হিসেবে প্রবেশ করুন।</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-foreground">Email address</label>
-          <input id="email" name="email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} disabled={pending} placeholder="you@company.com" className="flex h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:cursor-not-allowed disabled:opacity-60" />
+          <label htmlFor="identifier" className="text-sm font-medium text-foreground">ইমেইল বা ইউজারনেম</label>
+          <input id="identifier" name="identifier" type="text" autoComplete="username" required value={identifier} onChange={(event) => setIdentifier(event.target.value)} disabled={pending} placeholder="ইমেইল বা ইউজারনেম" className="flex h-12 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:cursor-not-allowed disabled:opacity-60" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium text-foreground">Password</label>
-            <button type="button" className="text-xs font-medium text-muted-foreground transition hover:text-foreground">Forgot password?</button>
+            <label htmlFor="password" className="text-sm font-medium text-foreground">পাসওয়ার্ড</label>
           </div>
           <div className="relative">
             <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={pending} placeholder="Enter your password" className="flex h-12 w-full rounded-lg border border-input bg-background px-4 pr-12 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/10 disabled:cursor-not-allowed disabled:opacity-60" />
@@ -65,9 +64,9 @@ export function LoginForm() {
           </div>
         </div>
         {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
-        <Button type="submit" className="h-12 w-full rounded-lg text-sm" disabled={pending}>{pending ? "Signing in…" : "Sign in to workspace"}</Button>
+        <Button type="submit" className="h-12 w-full rounded-lg text-sm" disabled={pending}>{pending ? "প্রবেশ করা হচ্ছে…" : "লগইন করুন"}</Button>
       </form>
-      <p className="mt-9 text-center text-xs leading-5 text-muted-foreground">Protected access for authorized administrators only.</p>
+      <p className="mt-9 text-center text-xs leading-5 text-muted-foreground">শুধুমাত্র অনুমোদিত প্রশাসক ও শিক্ষকদের জন্য।</p>
     </div>
   );
 }

@@ -12,8 +12,10 @@ import {
 
 export type AuthUser = {
   id: string;
-  email: string;
-  createdAt: string;
+  schoolId: string;
+  role: "ADMIN" | "TEACHER" | "STUDENT";
+  displayNameBn: string;
+  tokenType: "access";
 };
 
 type AuthUserContextValue = {

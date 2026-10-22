@@ -1,61 +1,20 @@
-import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { admins } from "@/db/schema";
-import {
-  PASSWORD_TIMING_PLACEHOLDER_HASH,
-  SESSION_COOKIE_NAME,
-  sessionCookieBase,
-} from "@/lib/auth/constants";
-import { signSessionToken } from "@/lib/auth/jwt";
-import { verifyPassword } from "@/lib/auth/password";
+import { SESSION_COOKIE_NAME, sessionCookieBase } from "@/lib/auth/constants";
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-
-  const { email: rawEmail, password: rawPassword } = body as Record<
-    string,
-    unknown
-  >;
-  const email =
-    typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
-  const password = typeof rawPassword === "string" ? rawPassword : "";
-
-  if (!email || !password) {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-
-  const [admin] = await db()
-    .select()
-    .from(admins)
-    .where(eq(admins.email, email))
-    .limit(1);
-
-  const hashForCompare = admin?.passwordHash ?? PASSWORD_TIMING_PLACEHOLDER_HASH;
-  const passwordOk = await verifyPassword(password, hashForCompare);
-
-  if (!admin || !passwordOk) {
-    return NextResponse.json(
-      { error: "Invalid email or password." },
-      { status: 401 },
-    );
-  }
-
-  const token = await signSessionToken({
-    sub: admin.id,
-    email: admin.email,
-  });
-
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieBase());
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") return NextResponse.json({ error: "অনুরোধটি সঠিক নয়" }, { status: 400 });
+  const value = body as Record<string, unknown>;
+  const identifier = typeof value.identifier === "string" ? value.identifier.trim() : "";
+  const password = typeof value.password === "string" ? value.password : "";
+  if (!identifier || !password) return NextResponse.json({ error: "ইউজারনেম ও পাসওয়ার্ড দিন" }, { status: 400 });
+  const backendUrl = process.env.BACKEND_API_URL ?? "http://localhost:4000/api/v1";
+  const backendResponse = await fetch(`${backendUrl}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifier, password }), cache: "no-store" });
+  const payload: unknown = await backendResponse.json().catch(() => null);
+  if (!backendResponse.ok || !payload || typeof payload !== "object" || !("data" in payload)) return NextResponse.json({ error: "ইউজারনেম বা পাসওয়ার্ড সঠিক নয়" }, { status: 401 });
+  const data = payload.data as { accessToken?: unknown; user?: unknown };
+  if (typeof data.accessToken !== "string") return NextResponse.json({ error: "লগইন সাড়া সঠিক নয়" }, { status: 502 });
+  const response = NextResponse.json({ ok: true, user: data.user });
+  response.cookies.set(SESSION_COOKIE_NAME, data.accessToken, sessionCookieBase());
   return response;
 }

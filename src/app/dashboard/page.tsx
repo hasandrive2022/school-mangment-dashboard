@@ -1,41 +1,12 @@
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/dashboard/admin-dashboard";
-import { db } from "@/db";
-import { admins } from "@/db/schema";
 import { getSession } from "@/lib/auth/session";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Administrator dashboard",
-};
+export const metadata: Metadata = { title: "ড্যাশবোর্ড", description: "বিদ্যালয় ব্যবস্থাপনা ড্যাশবোর্ড" };
 
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
-
-  const [admin] = await db()
-    .select({
-      id: admins.id,
-      email: admins.email,
-      createdAt: admins.createdAt,
-    })
-    .from(admins)
-    .where(eq(admins.id, session.sub))
-    .limit(1);
-
-  if (!admin) {
-    redirect("/login");
-  }
-
-  return (
-    <AdminDashboard
-      id={admin.id}
-      email={admin.email}
-      createdAt={admin.createdAt.toISOString()}
-    />
-  );
+  if (!session || (session.role !== "ADMIN" && session.role !== "TEACHER")) redirect("/login");
+  return <AdminDashboard id={session.sub} schoolId={session.schoolId} displayNameBn={session.displayNameBn} role={session.role} />;
 }

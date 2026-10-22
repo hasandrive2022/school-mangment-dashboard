@@ -23,7 +23,13 @@ export async function signSessionToken(payload: {
     .sign(getSecretKey());
 }
 
-export type SessionPayload = { sub: string; email: string };
+export type SessionPayload = {
+  sub: string;
+  schoolId: string;
+  role: "ADMIN" | "TEACHER" | "STUDENT";
+  displayNameBn: string;
+  tokenType: "access";
+};
 
 export async function verifySessionToken(
   token: string,
@@ -33,11 +39,14 @@ export async function verifySessionToken(
       algorithms: ["HS256"],
     });
     const sub = payload.sub;
-    const email = payload.email;
-    if (typeof sub !== "string" || typeof email !== "string") {
+    const schoolId = payload.schoolId;
+    const role = payload.role;
+    const displayNameBn = payload.displayNameBn;
+    const tokenType = payload.tokenType;
+    if (typeof sub !== "string" || typeof schoolId !== "string" || (role !== "ADMIN" && role !== "TEACHER" && role !== "STUDENT") || typeof displayNameBn !== "string" || tokenType !== "access") {
       return null;
     }
-    return { sub, email };
+    return { sub, schoolId, role, displayNameBn, tokenType };
   } catch {
     return null;
   }
