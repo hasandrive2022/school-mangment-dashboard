@@ -281,7 +281,28 @@
   letter-spacing: -0.01em;
 }
 .dadmin .app.full {
+  height: 100vh;
   background: #f6f8fb;
+  overflow: hidden;
+}
+.dadmin .app.full .side {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+.dadmin .app.full .side nav {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dadmin .app.full .main {
+  min-height: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+.dadmin .app.full .content {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .dadmin .side {
   background: linear-gradient(180deg, #0f3151 0%, #0b2740 100%);
