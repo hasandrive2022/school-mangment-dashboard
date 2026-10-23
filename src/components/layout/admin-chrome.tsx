@@ -8,10 +8,13 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  Menu,
   Settings,
   Users,
+  WalletCards,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { useAdminSWR } from "@/lib/swr";
@@ -47,6 +50,16 @@ const adminGroups = [
       ["বিদ্যালয়ের সেটিংস", "/dashboard/settings", Settings],
     ],
   },
+  {
+    title: "অতিরিক্ত ব্যবস্থাপনা",
+    items: [
+      ["বিজ্ঞপ্তি", "/dashboard/admin/notices", FileText],
+      ["পরীক্ষা ও মূল্যায়ন", "/dashboard/admin/exams", GraduationCap],
+      ["ফি ইভেন্ট", "/dashboard/admin/fee-events", CreditCard],
+      ["ফি সংগ্রহ", "/dashboard/admin/collection", WalletCards],
+      ["ইনবক্স", "/dashboard/admin/inbox", Users],
+    ],
+  },
 ] as const;
 const teacherGroups = [
   { title: "ওভারভিউ", items: [["ড্যাশবোর্ড", "/dashboard", LayoutDashboard]] },
@@ -55,6 +68,8 @@ const teacherGroups = [
     items: [
       ["উপস্থিতি গ্রহণ", "/dashboard/attendance", CalendarDays],
       ["নম্বর এন্ট্রি", "/dashboard/marks-entry", GraduationCap],
+      ["আমার বেতন", "/dashboard/admin/t-salary", WalletCards],
+      ["আমার প্রোফাইল", "/dashboard/admin/t-profile", Users],
     ],
   },
 ] as const;
@@ -87,6 +102,16 @@ const pageTitles: Array<[string, string]> = [
   ["/dashboard/settings", "বিদ্যালয়ের সেটিংস"],
   ["/settings", "বিদ্যালয়ের সেটিংস"],
   ["/demo-reset", "ডেমো ডেটা রিসেট"],
+  ["/dashboard/admin/notices", "বিজ্ঞপ্তি ব্যবস্থাপনা"],
+  ["/dashboard/admin/exams", "পরীক্ষা ও মূল্যায়ন"],
+  ["/dashboard/admin/fee-events", "ফি ইভেন্ট"],
+  ["/dashboard/admin/collection", "ফি সংগ্রহ"],
+  ["/dashboard/admin/salary", "শিক্ষক বেতন"],
+  ["/dashboard/admin/ledger", "আয়–ব্যয় হিসাব"],
+  ["/dashboard/admin/admissions", "ভর্তি আবেদন"],
+  ["/dashboard/admin/inbox", "ইনবক্স"],
+  ["/dashboard/admin/t-salary", "আমার বেতন"],
+  ["/dashboard/admin/t-profile", "আমার প্রোফাইল"],
 ];
 
 function titleFor(pathname: string) {
@@ -97,6 +122,7 @@ function titleFor(pathname: string) {
 
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isShellless = pathname === "/login" || pathname === "/dashboard";
   const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
@@ -129,7 +155,7 @@ export function AdminChrome({ children }: Props) {
   return (
     <div className="dadmin">
       <div className="app full">
-        <aside className="side">
+        <aside className={`side${sidebarOpen ? " open" : ""}`}>
           <div className="brand">
             <span className="logo">
               <GraduationCap className="ic lg" />
@@ -150,6 +176,7 @@ export function AdminChrome({ children }: Props) {
                     className={`mi${pathname === href ? " on" : ""}`}
                     href={href}
                     key={href}
+                    onClick={() => setSidebarOpen(false)}
                   >
                     <Icon className="ic" />
                     {label}
@@ -170,6 +197,9 @@ export function AdminChrome({ children }: Props) {
         </aside>
         <div className="main">
           <header className="topbar">
+            <button type="button" className="ibtn dash-menu-btn" onClick={() => setSidebarOpen((value) => !value)} aria-label="মেনু খুলুন বা বন্ধ করুন">
+              <Menu className="ic sm" />
+            </button>
             <span className="pt">{titleFor(pathname)}</span>
             <span style={{ flex: 1 }} />
             <div className="tuser">
