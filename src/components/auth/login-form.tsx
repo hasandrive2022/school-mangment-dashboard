@@ -30,8 +30,10 @@ export function LoginForm() {
         setError(data.error ?? "Sign-in failed.");
         return;
       }
+      // The replacement navigation already fetches a fresh server tree. Calling
+      // refresh immediately after it can close the same RSC stream twice in
+      // Next.js, which produces CLOSED writable stream errors in the preview.
       router.replace("/dashboard");
-      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
