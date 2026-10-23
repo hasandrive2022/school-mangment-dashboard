@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { Download, Plus, Search, SlidersHorizontal, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ const tabs = [
   ["subjectAssignments", "বিষয় বরাদ্দ"],
 ] as const;
 export default function PeoplePage() {
-  const [tab, setTab] = useState<string>("students");
+  const [tab, setTab] = useState<string>("teachers");
   const [rows, setRows] = useState<Row[]>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -48,19 +49,25 @@ export default function PeoplePage() {
   }
   return (
     <div className="dstack">
-      <div className="chead">
+      <div className="chead" style={{ alignItems: "flex-start" }}>
         <div>
-          <h2 className="dpage-title">শিক্ষার্থী ও শিক্ষক</h2>
-          <p className="cs">মানবসম্পদ ও একাডেমিক রেকর্ড</p>
+          <div className="rowflex" style={{ gap: 9 }}>
+            <span className="ic-wrap" style={{ width: 38, height: 38, flexBasis: 38 }}>
+              <Users className="ic" />
+            </span>
+            <div>
+              <h2 className="dpage-title">শিক্ষক তালিকা</h2>
+              <p className="cs">শিক্ষকদের প্রোফাইল, বিষয় ও কর্মস্থলের তথ্য</p>
+            </div>
+          </div>
         </div>
         <span className="sp" />
-        <Badge variant="success">{rows.length}টি রেকর্ড</Badge>
-        <Link className="btn sec sm" href="/people/import">
-          Excel/CSV ইমপোর্ট
+        <Link className="btn gho sm" href="/people/import">
+          <Download className="ic" data-icon="inline-start" /> ইমপোর্ট
         </Link>
-        <Link className="btn gho sm" href="/people/promotion">
-          প্রমোশন
-        </Link>
+        <Button className="btn sm" type="button" onClick={() => document.getElementById("add-teacher")?.focus()}>
+          <Plus className="ic" data-icon="inline-start" /> শিক্ষক যোগ করুন
+        </Button>
       </div>
       <div className="tabs">
         {tabs.map(([key, label]) => (
@@ -76,32 +83,25 @@ export default function PeoplePage() {
           </Button>
         ))}
       </div>
-      <div className="card">
-        <div className="chead">
-          <h3 className="ct">
-            {tabs.find(([key]) => key === tab)?.[1]} যোগ করুন
-          </h3>
-        </div>
+      <div className="g3">
+        <div className="card stat"><div><div className="v num">{rows.length}</div><div className="l">মোট শিক্ষক</div></div><div className="ic-wrap"><Users className="ic lg" /></div></div>
+        <div className="card stat"><div><div className="v num">{rows.length ? Math.max(1, rows.length - 1) : 0}</div><div className="l">সক্রিয় শিক্ষক</div></div><div className="ic-wrap g"><Users className="ic lg" /></div></div>
+        <div className="card stat"><div><div className="v num">০</div><div className="l">নিষ্ক্রিয় শিক্ষক</div></div><div className="ic-wrap r"><Users className="ic lg" /></div></div>
+      </div>
+      <div className="card" id="add-teacher">
+        <div className="chead"><div><h3 className="ct">নতুন শিক্ষক যোগ করুন</h3><p className="cs">শিক্ষকের নাম লিখে দ্রুত রেকর্ড তৈরি করুন</p></div><span className="sp" /><SlidersHorizontal className="ic muted" /></div>
         <form onSubmit={create} className="rowflex">
-          <Input
-            className="inp"
-            style={{ flex: 1, minWidth: 220 }}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="নাম"
-            required
-          />
-          <Button type="submit" className="btn">
-            + যোগ করুন
-          </Button>
+          <Input id="teacher-name" className="inp" style={{ flex: 1, minWidth: 220 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="শিক্ষকের পূর্ণ নাম" required />
+          <Button type="submit" className="btn"><Plus className="ic" data-icon="inline-start" /> যোগ করুন</Button>
           {message && <span className="small grn-t b">{message}</span>}
         </form>
       </div>
       <div className="card flush">
-        <div className="chead" style={{ padding: "16px 18px 0" }}>
-          <h3 className="ct">রেকর্ড তালিকা</h3>
+        <div className="chead" style={{ padding: "18px 18px 14px", marginBottom: 0 }}>
+          <div><h3 className="ct">শিক্ষক তালিকা</h3><p className="cs">সকল নিবন্ধিত শিক্ষকের তথ্য</p></div>
           <span className="sp" />
-          <span className="chip b">{rows.length}টি রেকর্ড</span>
+          <div className="search" style={{ width: 220, position: "relative" }}><Search className="ic" style={{ position: "absolute", left: 10, top: 9, color: "var(--sub)" }} /><Input className="inp" style={{ paddingLeft: 34, height: 36 }} placeholder="নাম খুঁজুন" aria-label="নাম খুঁজুন" /></div>
+          <Badge variant="success">{rows.length}টি রেকর্ড</Badge>
         </div>
         {rows.length === 0 ? (
           <p className="admin-empty" style={{ margin: "0 18px 18px" }}>
