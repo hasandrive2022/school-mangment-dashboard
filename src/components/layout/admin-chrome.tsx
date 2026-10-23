@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { useAdminSWR } from "@/lib/swr";
 
@@ -58,10 +59,46 @@ const teacherGroups = [
   },
 ] as const;
 
+const pageTitles: Array<[string, string]> = [
+  ["/dashboard/people", "শিক্ষার্থী ও শিক্ষক"],
+  ["/people", "শিক্ষার্থী ও শিক্ষক"],
+  ["/dashboard/academics", "একাডেমিক কাঠামো"],
+  ["/academics", "একাডেমিক কাঠামো"],
+  ["/dashboard/routine", "ক্লাস রুটিন"],
+  ["/routine", "ক্লাস রুটিন"],
+  ["/dashboard/attendance/reports", "উপস্থিতি রিপোর্ট"],
+  ["/attendance/reports", "উপস্থিতি রিপোর্ট"],
+  ["/dashboard/attendance", "উপস্থিতি গ্রহণ"],
+  ["/attendance", "উপস্থিতি গ্রহণ"],
+  ["/dashboard/marks-entry", "নম্বর এন্ট্রি"],
+  ["/marks-entry", "নম্বর এন্ট্রি"],
+  ["/dashboard/results", "পরীক্ষা ও ফলাফল"],
+  ["/results", "পরীক্ষা ও ফলাফল"],
+  ["/dashboard/finance", "ফি ও সংগ্রহ"],
+  ["/finance", "ফি ও সংগ্রহ"],
+  ["/dashboard/salary", "বেতন"],
+  ["/salary", "বেতন"],
+  ["/dashboard/ledger", "আয়–ব্যয়"],
+  ["/ledger", "আয়–ব্যয়"],
+  ["/dashboard/admissions", "ভর্তি আবেদন"],
+  ["/admissions", "ভর্তি আবেদন"],
+  ["/dashboard/content", "ওয়েবসাইট কনটেন্ট"],
+  ["/content", "ওয়েবসাইট কনটেন্ট"],
+  ["/dashboard/settings", "বিদ্যালয়ের সেটিংস"],
+  ["/settings", "বিদ্যালয়ের সেটিংস"],
+  ["/demo-reset", "ডেমো ডেটা রিসেট"],
+];
+
+function titleFor(pathname: string) {
+  return (
+    pageTitles.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "প্যানেল"
+  );
+}
+
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
   const isShellless = pathname === "/login" || pathname === "/dashboard";
-  const { data: mePayload } = useAdminSWR<Me>(
+  const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
   );
   const { data: schoolPayload } = useAdminSWR<SchoolSettings>(
@@ -69,48 +106,87 @@ export function AdminChrome({ children }: Props) {
   );
   const me = mePayload?.user;
   const schoolName = schoolPayload?.data?.school?.nameBn ?? "বিদ্যালয়";
-  if (pathname === "/login" || pathname === "/dashboard") return children;
+  if (pathname === "/login" || pathname === "/dashboard")
+    return <div className="dadmin">{children}</div>;
+  if (isMeLoading || !me) {
+    return (
+      <div className="dadmin">
+        <main className="admin-loading">
+          <div className="loading-bar loading-title" />
+          <div className="loading-grid">
+            <div className="loading-card" />
+            <div className="loading-card" />
+            <div className="loading-card" />
+          </div>
+        </main>
+        {children}
+      </div>
+    );
+  }
   const role = me?.role ?? "ADMIN";
   const groups = role === "TEACHER" ? teacherGroups : adminGroups;
+  const displayName = me?.displayNameBn || "স্বাগতম";
   return (
-    <div className="admin-chrome">
-      <aside className="admin-chrome-sidebar">
-        <div className="admin-chrome-brand">
-          <span>আ</span>
-          <div>
-            <b>{schoolName}</b>
-            <small>
-              {role === "TEACHER" ? "শিক্ষক প্যানেল" : "প্রশাসন প্যানেল"}
-            </small>
-          </div>
-        </div>
-        <nav aria-label="প্রধান নেভিগেশন">
-          {groups.map((group) => (
-            <div key={group.title}>
-              <p className="admin-nav-group">{group.title}</p>
-              {group.items.map(([label, href, Icon]) => (
-                <a
-                  className={pathname === href ? "active" : ""}
-                  href={href}
-                  key={href}
-                >
-                  <Icon className="size-4" />
-                  {label}
-                </a>
-              ))}
+    <div className="dadmin">
+      <div className="app full">
+        <aside className="side">
+          <div className="brand">
+            <span className="logo">
+              <GraduationCap className="ic lg" />
+            </span>
+            <div>
+              <div className="bn">{schoolName}</div>
+              <div className="be">
+                {role === "TEACHER" ? "শিক্ষক প্যানেল" : "প্রশাসন প্যানেল"}
+              </div>
             </div>
-          ))}
-        </nav>
-      </aside>
-      <div className="admin-chrome-main">
-        <header className="admin-chrome-topbar">
-          <div>
-            <b>{schoolName}</b>
-            <small>{me?.displayNameBn || "স্বাগতম"}</small>
           </div>
-          <SignOutButton />
-        </header>
-        {children}
+          <nav aria-label="প্রধান নেভিগেশন">
+            {groups.map((group) => (
+              <div key={group.title}>
+                <p className="sg">{group.title}</p>
+                {group.items.map(([label, href, Icon]) => (
+                  <Link
+                    className={`mi${pathname === href ? " on" : ""}`}
+                    href={href}
+                    key={href}
+                  >
+                    <Icon className="ic" />
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </nav>
+          <div className="who">
+            <span className="av">{displayName.slice(0, 1)}</span>
+            <div>
+              <div className="wn">{displayName}</div>
+              <div className="wr">
+                {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"}
+              </div>
+            </div>
+          </div>
+        </aside>
+        <div className="main">
+          <header className="topbar">
+            <span className="pt">{titleFor(pathname)}</span>
+            <span style={{ flex: 1 }} />
+            <div className="tuser">
+              <span className="av">{displayName.slice(0, 1)}</span>
+              <div>
+                <div className="nm">{displayName}</div>
+                <div className="rl">
+                  {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"} · {schoolName}
+                </div>
+              </div>
+            </div>
+            <span className="signout-wrap">
+              <SignOutButton />
+            </span>
+          </header>
+          <div className="content">{children}</div>
+        </div>
       </div>
     </div>
   );

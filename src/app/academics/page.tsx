@@ -16,14 +16,19 @@ export default function AcademicsPage() {
       .then((p: { data?: Record<string, unknown>[] }) => setRows(p.data ?? []));
   }, [tab]);
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1200px]">
-        <h1 className="text-2xl font-bold text-primary-800">একাডেমিক কাঠামো</h1>
-        <div className="my-6 flex gap-2">
+    <div className="dstack">
+        <div className="chead">
+          <div>
+            <h2 className="dpage-title">একাডেমিক কাঠামো</h2>
+            <p className="cs">সেশন, শ্রেণি, শাখা ও বিষয় — শিক্ষক–বিষয় বণ্টন People পেজের “বিষয় বরাদ্দ” ট্যাবে।</p>
+          </div>
+        </div>
+        <div className="tabs">
           {tabs.map(([key, label]) => (
             <Button
               type="button"
-              variant={tab === key ? "default" : "ghost"}
+              variant="ghost"
+              className={tab === key ? "on" : ""}
               key={key}
               onClick={() => setTab(key)}
             >
@@ -31,15 +36,18 @@ export default function AcademicsPage() {
             </Button>
           ))}
         </div>
-        <div className="rounded-lg bg-white p-5">
+        <div className="card">
           {rows.map((row, index) => (
-            <div className="border-b py-3" key={String(row.id ?? index)}>
-              {String(row.nameBn ?? row.name ?? row.year ?? "রেকর্ড")}
+            <div className="listrow" key={String(row.id ?? index)}>
+              <span className="av">{index + 1}</span>
+              <div className="grow">
+                <b>{String(row.nameBn ?? row.name ?? row.year ?? "রেকর্ড")}</b>
+              </div>
+              <span className="chip b">{tabs.find(([key]) => key === tab)?.[1]}</span>
             </div>
           ))}
-          {rows.length === 0 && <p>কোনো রেকর্ড নেই।</p>}
+          {rows.length === 0 && <p className="admin-empty">কোনো রেকর্ড নেই।</p>}
         </div>
-      </div>
-    </main>
+    </div>
   );
 }

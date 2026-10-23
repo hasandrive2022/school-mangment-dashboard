@@ -28,27 +28,48 @@ export default function MarksEntryPage() {
         : "নম্বর সংরক্ষণ করা যায়নি",
     );
   }
+  const labels: Record<string, string> = {
+    examSubjectId: "পরীক্ষা–বিষয় ID",
+    studentId: "শিক্ষার্থী ID",
+    cq: "সৃজনশীল (CQ)",
+    mcq: "বহুনির্বাচনি (MCQ)",
+    practical: "ব্যবহারিক",
+  };
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[700px]">
-        <h1 className="text-2xl font-bold text-primary-800">নম্বর এন্ট্রি</h1>
-        <div className="mt-6 grid gap-4 rounded-lg bg-white p-6">
-          {Object.entries(form).map(([key, value]) => (
-            <Input
-              key={key}
-              placeholder={key}
-              value={value}
-              onChange={(e) =>
-                setForm((current) => ({ ...current, [key]: e.target.value }))
-              }
-            />
-          ))}
-          <Button type="button" onClick={() => void save()}>
-            জমা দিন
-          </Button>
-          {message && <p>{message}</p>}
+    <div className="dstack" style={{ maxWidth: 640 }}>
+      <div className="chead">
+        <div>
+          <h2 className="dpage-title">নম্বর এন্ট্রি</h2>
+          <p className="cs">নিজের বরাদ্দকৃত বিষয়ের নম্বর জমা দিন — জমা দিলে এন্ট্রি লক হয়ে যায়, আনলক করতে অ্যাডমিনের অনুমতি লাগে।</p>
         </div>
       </div>
-    </main>
+      <div className="card">
+        <div className="fgrid">
+          {Object.entries(form).map(([key, value]) => (
+            <div key={key}>
+              <label className="lbl">{labels[key] ?? key}</label>
+              <Input
+                className="inp"
+                placeholder={labels[key] ?? key}
+                value={value}
+                onChange={(e) =>
+                  setForm((current) => ({ ...current, [key]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <Button type="button" className="btn" onClick={() => void save()}>
+            জমা দিন
+          </Button>
+        </div>
+        {message && (
+          <p className="alert g" style={{ marginTop: 14 }}>
+            {message}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

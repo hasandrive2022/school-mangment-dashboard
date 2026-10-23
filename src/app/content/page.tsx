@@ -119,18 +119,23 @@ export default function ContentManagementPage() {
     "messages",
   ].includes(tab);
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1200px]">
-        <h1 className="text-2xl font-bold text-primary-800">
-          ওয়েবসাইট কনটেন্ট
-        </h1>
-        <div className="my-6 flex gap-2 overflow-x-auto border-b pb-2">
+    <div className="dstack">
+        <div className="chead">
+          <div>
+            <h2 className="dpage-title">ওয়েবসাইট কনটেন্ট</h2>
+            <p className="cs">হোমপেজ ব্লক, মেনু, সেবা বক্স, পেজ, বিজ্ঞপ্তি ও অন্যান্য কনটেন্ট — সব পরিবর্তন পাবলিক সাইটে সরাসরি প্রতিফলিত হয়।</p>
+          </div>
+          <span className="sp" />
+          <span className="chip b">{tabs.find(([key]) => key === tab)?.[1]}</span>
+        </div>
+        <div className="tabs" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
           {tabs.map(([key, label]) => (
             <Button
               key={key}
               size="sm"
               type="button"
-              variant={tab === key ? "default" : "ghost"}
+              variant="ghost"
+              className={tab === key ? "on" : ""}
               onClick={() => setTab(key)}
             >
               {label}
@@ -139,9 +144,9 @@ export default function ContentManagementPage() {
         </div>
         <form
           onSubmit={create}
-          className="mb-6 grid gap-3 rounded-lg border bg-white p-5 md:grid-cols-4"
+          className="card grid gap-3 md:grid-cols-4"
         >
-          <Input
+          <Input className="inp"
             placeholder="শিরোনাম"
             value={form.title}
             onChange={(event) =>
@@ -159,7 +164,7 @@ export default function ContentManagementPage() {
               />
             </div>
           ) : (
-            <Input
+            <Input className="inp"
               placeholder="বিবরণ/URL"
               value={form.body}
               onChange={(event) =>
@@ -168,7 +173,7 @@ export default function ContentManagementPage() {
             />
           )}
           {uploadKind && (
-            <Input
+            <Input className="inp"
               type="file"
               disabled={isUploading}
               accept={
@@ -182,7 +187,7 @@ export default function ContentManagementPage() {
               }}
             />
           )}
-          <Input
+          <Input className="inp"
             placeholder="বিভাগ"
             value={form.category}
             onChange={(event) =>
@@ -198,21 +203,18 @@ export default function ContentManagementPage() {
             />{" "}
             প্রকাশিত
           </label>
-          <Button type="submit" disabled={isUploading}>
+          <Button type="submit" className="btn" disabled={isUploading}>
             নতুন রেকর্ড
           </Button>
-          {message && <p className="text-accent-600">{message}</p>}
+          {message && <p className="alert g md:col-span-4">{message}</p>}
         </form>
-        <section className="rounded-lg border bg-white p-5">
+        <section className="card flush" style={{ padding: "6px 18px" }}>
           {items.length === 0 ? (
             <p>কোনো রেকর্ড নেই।</p>
           ) : (
             items.map((item) => (
-              <div
-                className="flex items-center justify-between border-b py-3"
-                key={item.id}
-              >
-                <span>
+              <div className="listrow" key={item.id}>
+                <span className="grow">
                   {String(
                     item.titleBn ??
                       item.name ??
@@ -240,7 +242,6 @@ export default function ContentManagementPage() {
             ))
           )}
         </section>
-      </div>
-    </main>
+    </div>
   );
 }

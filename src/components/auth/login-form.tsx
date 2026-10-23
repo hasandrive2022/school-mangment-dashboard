@@ -41,24 +41,13 @@ export function LoginForm() {
 
   return (
     <div>
-      <div className="mb-9">
-        <p className="mb-3 text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          স্বাগতম
-        </p>
-        <h2 className="text-3xl font-bold tracking-tight text-primary-800">
-          প্রশাসন প্যানেলে লগইন
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          প্রশাসক বা শিক্ষক হিসেবে প্রবেশ করুন।
-        </p>
-      </div>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label
-            htmlFor="identifier"
-            className="text-sm font-medium text-foreground"
-          >
-            ইমেইল বা ইউজারনেম
+      <form
+        onSubmit={onSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
+      >
+        <div>
+          <label htmlFor="identifier" className="lbl">
+            ব্যবহারকারীর নাম / ইমেইল <span className="req">*</span>
           </label>
           <Input
             id="identifier"
@@ -70,18 +59,13 @@ export function LoginForm() {
             onChange={(event) => setIdentifier(event.target.value)}
             disabled={pending}
             placeholder="ইমেইল বা ইউজারনেম"
-            className="h-12 px-4"
+            className="inp"
           />
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-foreground"
-            >
-              পাসওয়ার্ড
-            </label>
-          </div>
+        <div>
+          <label htmlFor="password" className="lbl">
+            পাসওয়ার্ড <span className="req">*</span>
+          </label>
           <div className="relative">
             <Input
               id="password"
@@ -92,8 +76,8 @@ export function LoginForm() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={pending}
-              placeholder="Enter your password"
-              className="h-12 px-4 pr-12"
+              placeholder="পাসওয়ার্ড"
+              className="inp"
             />
             <Button
               type="button"
@@ -103,7 +87,7 @@ export function LoginForm() {
               disabled={pending}
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-              className="absolute inset-y-0 right-0 h-12 w-12"
+              className="absolute inset-y-0 right-0 h-full w-11"
             >
               {showPassword ? (
                 <svg
@@ -135,19 +119,20 @@ export function LoginForm() {
           </div>
         </div>
         {error ? (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="alert r" role="alert">
             {error}
           </p>
         ) : null}
         <Button
           type="submit"
-          className="h-12 w-full rounded-lg text-sm"
+          className="btn"
+          style={{ width: "100%", justifyContent: "center", height: 46 }}
           disabled={pending}
         >
-          {pending ? "প্রবেশ করা হচ্ছে…" : "লগইন করুন"}
+          {pending ? "প্রবেশ করা হচ্ছে…" : "লগিন করুন"}
         </Button>
       </form>
-      <p className="mt-9 text-center text-xs leading-5 text-muted-foreground">
+      <p className="small muted" style={{ textAlign: "center", marginTop: 16 }}>
         শুধুমাত্র অনুমোদিত প্রশাসক ও শিক্ষকদের জন্য।
       </p>
     </div>

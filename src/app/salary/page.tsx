@@ -54,45 +54,49 @@ export default function SalaryPage() {
     if (response.ok) await load();
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1100px]">
-        <h1 className="text-2xl font-bold text-primary-800">শিক্ষক বেতন</h1>
-        <Card className="mt-6">
+    <div className="dstack">
+        <div className="chead">
+          <div>
+            <h2 className="dpage-title">শিক্ষক বেতন</h2>
+            <p className="cs">বেতন পরিশোধ করলে ledger-এ স্বয়ংক্রিয়ভাবে ব্যয় হিসেবে পোস্ট হয়।</p>
+          </div>
+        </div>
+        <Card className="card">
           <CardHeader>
             <CardTitle>বেতন পরিশোধ</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3">
-            <Input
+            <Input className="inp"
               placeholder="Teacher ID"
               value={form.teacherId}
               onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
             />
-            <Input
+            <Input className="inp"
               type="month"
               value={form.salaryMonth}
               onChange={(e) =>
                 setForm({ ...form, salaryMonth: e.target.value })
               }
             />
-            <Input
+            <Input className="inp"
               type="number"
               placeholder="মূল বেতন (পয়সা)"
               value={form.basic}
               onChange={(e) => setForm({ ...form, basic: e.target.value })}
             />
-            <Input
+            <Input className="inp"
               type="number"
               placeholder="ভাতা"
               value={form.allowances}
               onChange={(e) => setForm({ ...form, allowances: e.target.value })}
             />
-            <Input
+            <Input className="inp"
               type="number"
               placeholder="কর্তন"
               value={form.deductions}
               onChange={(e) => setForm({ ...form, deductions: e.target.value })}
             />
-            <Select
+            <Select className="sel"
               value={form.method}
               onChange={(e) => setForm({ ...form, method: e.target.value })}
             >
@@ -100,31 +104,63 @@ export default function SalaryPage() {
               <option>ব্যাংক</option>
               <option>বিকাশ</option>
             </Select>
-            <Button onClick={() => void pay()}>পরিশোধ করুন</Button>
+            <Button className="btn grn" onClick={() => void pay()}>পরিশোধ করুন</Button>
             {message && <p>{message}</p>}
           </CardContent>
         </Card>
-        <Card className="mt-6">
+        <Card className="card flush">
           <CardHeader>
             <CardTitle>বেতন রেকর্ড</CardTitle>
           </CardHeader>
           <CardContent>
-            {rows.map((row) => (
-              <div
-                className="flex items-center justify-between border-b py-3"
-                key={row.id}
-              >
-                <span>
-                  {row.teacherId} · {row.salaryMonth} · ৳ {row.net}
-                </span>
-                <Button variant="outline" onClick={() => window.print()}>
-                  রসিদ প্রিন্ট
-                </Button>
+            {rows.length === 0 ? (
+              <p className="admin-empty">কোনো বেতন রেকর্ড নেই।</p>
+            ) : (
+              <div className="tw">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>শিক্ষক ID</th>
+                      <th>মাস</th>
+                      <th className="r">মূল বেতন</th>
+                      <th className="r">ভাতা</th>
+                      <th className="r">কর্তন</th>
+                      <th className="r">নেট</th>
+                      <th>অবস্থা</th>
+                      <th className="r">কার্যকলাপ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id}>
+                        <td className="num">{row.teacherId}</td>
+                        <td>{row.salaryMonth}</td>
+                        <td className="r num">৳ {row.basic}</td>
+                        <td className="r num">৳ {row.allowances}</td>
+                        <td className="r num">৳ {row.deductions}</td>
+                        <td className="r num">
+                          <b>৳ {row.net}</b>
+                        </td>
+                        <td>
+                          <span className="chip g">{row.status}</span>
+                        </td>
+                        <td className="r">
+                          <Button
+                            variant="outline"
+                            className="btn gho sm"
+                            onClick={() => window.print()}
+                          >
+                            রসিদ প্রিন্ট
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
-      </div>
-    </main>
+    </div>
   );
 }

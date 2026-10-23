@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { generateReactHelpers } from "@uploadthing/react";
 import type { UploadRouter } from "@/app/api/uploadthing/core";
@@ -53,9 +54,8 @@ export default function SettingsPage() {
     );
   }
   return (
-    <main className="settings-page">
-      <div className="settings-container">
-        <Button variant="link" onClick={() => router.push("/dashboard")}>
+    <div className="dstack">
+        <Button variant="link" className="btn gho sm" style={{ alignSelf: "flex-start" }} onClick={() => router.push("/dashboard")}>
           ← ড্যাশবোর্ডে ফিরুন
         </Button>
         <div className="admin-page-heading">
@@ -67,7 +67,7 @@ export default function SettingsPage() {
         </div>
         <div className="settings-layout">
           <form onSubmit={save}>
-            <Card>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>বিদ্যালয়ের তথ্য</CardTitle>
                 <p>
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                 />
                 <label className="settings-wide">
                   ঠিকানা
-                  <Textarea
+                  <Textarea className="inp"
                     value={school.address}
                     onChange={(event) =>
                       setSchool({ ...school, address: event.target.value })
@@ -108,7 +108,7 @@ export default function SettingsPage() {
                 </label>
                 <label>
                   লোগো/সিল আপলোড
-                  <Input
+                  <Input className="inp"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     disabled={isUploading}
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                     }
                   />
                 </label>
-                <Button type="submit" disabled={isUploading}>
+                <Button type="submit" className="btn" disabled={isUploading}>
                   সেটিংস সংরক্ষণ করুন
                 </Button>
                 {message && (
@@ -148,7 +148,7 @@ export default function SettingsPage() {
             </Card>
           </form>
           <aside className="settings-aside">
-            <Card>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>ব্র্যান্ড প্রিভিউ</CardTitle>
               </CardHeader>
@@ -159,7 +159,13 @@ export default function SettingsPage() {
                 >
                   <div className="theme-logo">
                     {school.logoUrl ? (
-                      <img src={school.logoUrl} alt="বিদ্যালয়ের লোগো" />
+                      <Image
+                        src={school.logoUrl}
+                        alt="বিদ্যালয়ের লোগো"
+                        width={96}
+                        height={96}
+                        unoptimized
+                      />
                     ) : (
                       <span>আ</span>
                     )}
@@ -170,7 +176,7 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="mt-5">
+            <Card className="card mt-5">
               <CardHeader>
                 <CardTitle>হোমপেজ সেটিংস</CardTitle>
               </CardHeader>
@@ -192,8 +198,7 @@ export default function SettingsPage() {
             </Card>
           </aside>
         </div>
-      </div>
-    </main>
+    </div>
   );
 }
 function Field({
@@ -207,8 +212,12 @@ function Field({
 }) {
   return (
     <label>
-      {label}
-      <Input value={value} onChange={(event) => onChange(event.target.value)} />
+      <span className="lbl">{label}</span>
+      <Input
+        className="inp"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </label>
   );
 }

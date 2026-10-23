@@ -58,8 +58,7 @@ export default function RoutinePage() {
     }
   }
   return (
-    <main className="admin-page">
-      <div className="admin-page-inner">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>Academic schedule</p>
@@ -69,12 +68,12 @@ export default function RoutinePage() {
             দিন ও period অনুযায়ী slot তৈরি করুন
           </span>
         </div>
-        <Card>
+        <Card className="card">
           <CardHeader>
             <CardTitle>নতুন routine slot</CardTitle>
           </CardHeader>
           <CardContent className="routine-form">
-            <Select
+            <Select className="sel"
               value={form.classId}
               onChange={(event) =>
                 setForm({ ...form, classId: event.target.value })
@@ -87,7 +86,7 @@ export default function RoutinePage() {
                 </option>
               ))}
             </Select>
-            <Select
+            <Select className="sel"
               value={form.subjectId}
               onChange={(event) =>
                 setForm({ ...form, subjectId: event.target.value })
@@ -100,7 +99,7 @@ export default function RoutinePage() {
                 </option>
               ))}
             </Select>
-            <Select
+            <Select className="sel"
               value={form.dayOfWeek}
               onChange={(event) =>
                 setForm({ ...form, dayOfWeek: event.target.value })
@@ -112,7 +111,7 @@ export default function RoutinePage() {
                 </option>
               ))}
             </Select>
-            <Input
+            <Input className="inp"
               type="number"
               min="1"
               max="10"
@@ -122,18 +121,18 @@ export default function RoutinePage() {
                 setForm({ ...form, period: event.target.value })
               }
             />
-            <Input
+            <Input className="inp"
               placeholder="কক্ষ (ঐচ্ছিক)"
               value={form.room}
               onChange={(event) =>
                 setForm({ ...form, room: event.target.value })
               }
             />
-            <Button onClick={() => void create()}>Slot সংরক্ষণ</Button>
+            <Button className="btn" onClick={() => void create()}>Slot সংরক্ষণ</Button>
             {message && <p className="text-accent-600">{message}</p>}
           </CardContent>
         </Card>
-        <Card className="mt-5">
+        <Card className="card">
           <CardHeader>
             <CardTitle>রুটিন প্রিভিউ</CardTitle>
           </CardHeader>
@@ -163,7 +162,6 @@ export default function RoutinePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </main>
+    </div>
   );
 }
