@@ -1,7 +1,2 @@
-allowBuilds:
-  bcrypt: true
-  esbuild: true
-  msgpackr-extract: set this to true or false
-  msw: true
-  sharp: true
-  unrs-resolver: true
+packages:
+  - "."

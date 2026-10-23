@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
+import { Hind_Siliguri } from "next/font/google";
+import { Suspense } from "react";
 import { AppProviders } from "@/components/providers/app-providers";
 import { AdminChrome } from "@/components/layout/admin-chrome";
 import "./globals.css";
 import "./design-admin.css";
+
+const bengaliFont = Hind_Siliguri({
+  subsets: ["bengali", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-bengali-loaded",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -19,22 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn" className="h-full antialiased">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="bn" className={`h-full antialiased ${bengaliFont.variable}`}>
       <body className="min-h-full flex flex-col">
         <AppProviders>
-          <AdminChrome>{children}</AdminChrome>
+          <Suspense fallback={<div className="dadmin" aria-hidden="true" />}>
+            <AdminChrome>{children}</AdminChrome>
+          </Suspense>
         </AppProviders>
       </body>
     </html>

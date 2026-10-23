@@ -147,7 +147,7 @@
   --color-neutral-200: #e5e7eb;
   --color-neutral-50: #f8f9fa;
   --color-white: #fff;
-  --font-bengali: "Hind Siliguri", "Noto Sans Bengali", sans-serif;
+  --font-bengali: var(--font-bengali-loaded), "Hind Siliguri", "Noto Sans Bengali", "Nirmala UI", "Vrinda", sans-serif;
 }
 @theme inline {
   --color-primary-900: var(--color-primary-900);
@@ -172,6 +172,9 @@
 html,
 body {
   font-family: var(--font-bengali);
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Approved admin gallery surface: navy shell, compact cards, calm tables and mobile-safe forms. */

@@ -2,11 +2,12 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
-export async function PATCH(
+async function forward(
   request: NextRequest,
   context: {
     params: Promise<{ resource: string; id: string; itemId: string }>;
   },
+  method: "PATCH" | "DELETE",
 ) {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   if (!token)
@@ -18,12 +19,12 @@ export async function PATCH(
   const response = await fetch(
     `${base}/content/${p.resource}/${p.id}/items/${p.itemId}`,
     {
-      method: "PATCH",
+      method,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: await request.text(),
+      body: method === "DELETE" ? undefined : await request.text(),
       cache: "no-store",
     },
   );
@@ -31,4 +32,22 @@ export async function PATCH(
     await response.json().catch(() => ({ error: "সার্ভার সাড়া দেয়নি" })),
     { status: response.status },
   );
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: {
+    params: Promise<{ resource: string; id: string; itemId: string }>;
+  },
+) {
+  return forward(request, context, "PATCH");
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: {
+    params: Promise<{ resource: string; id: string; itemId: string }>;
+  },
+) {
+  return forward(request, context, "DELETE");
 }

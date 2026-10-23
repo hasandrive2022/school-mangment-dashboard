@@ -8,10 +8,13 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  Menu,
   Settings,
   Users,
+  WalletCards,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { useAdminSWR } from "@/lib/swr";
@@ -37,6 +40,7 @@ const adminGroups = [
       ["ফি ও সংগ্রহ", "/dashboard/finance", CreditCard],
       ["বেতন", "/dashboard/salary", ClipboardList],
       ["আয়–ব্যয়", "/dashboard/ledger", FileText],
+      ["রিপোর্ট", "/dashboard/reports", FileText],
       ["ভর্তি আবেদন", "/dashboard/admissions", ClipboardList],
     ],
   },
@@ -55,11 +59,15 @@ const teacherGroups = [
     items: [
       ["উপস্থিতি গ্রহণ", "/dashboard/attendance", CalendarDays],
       ["নম্বর এন্ট্রি", "/dashboard/marks-entry", GraduationCap],
+      ["আমার বেতন", "/dashboard/my-salary", WalletCards],
+      ["আমার প্রোফাইল", "/dashboard/my-profile", Users],
     ],
   },
 ] as const;
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/people/students", "শিক্ষার্থী"],
+  ["/people/students", "শিক্ষার্থী"],
   ["/dashboard/people", "শিক্ষার্থী ও শিক্ষক"],
   ["/people", "শিক্ষার্থী ও শিক্ষক"],
   ["/dashboard/academics", "একাডেমিক কাঠামো"],
@@ -82,6 +90,12 @@ const pageTitles: Array<[string, string]> = [
   ["/ledger", "আয়–ব্যয়"],
   ["/dashboard/admissions", "ভর্তি আবেদন"],
   ["/admissions", "ভর্তি আবেদন"],
+  ["/dashboard/reports", "রিপোর্ট"],
+  ["/reports", "রিপোর্ট"],
+  ["/dashboard/my-salary", "আমার বেতন"],
+  ["/my-salary", "আমার বেতন"],
+  ["/dashboard/my-profile", "আমার প্রোফাইল ও রুটিন"],
+  ["/my-profile", "আমার প্রোফাইল ও রুটিন"],
   ["/dashboard/content", "ওয়েবসাইট কনটেন্ট"],
   ["/content", "ওয়েবসাইট কনটেন্ট"],
   ["/dashboard/settings", "বিদ্যালয়ের সেটিংস"],
@@ -97,6 +111,7 @@ function titleFor(pathname: string) {
 
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isShellless = pathname === "/login" || pathname === "/dashboard";
   const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
@@ -129,7 +144,7 @@ export function AdminChrome({ children }: Props) {
   return (
     <div className="dadmin">
       <div className="app full">
-        <aside className="side">
+        <aside className={`side${sidebarOpen ? " open" : ""}`}>
           <div className="brand">
             <span className="logo">
               <GraduationCap className="ic lg" />
@@ -150,6 +165,7 @@ export function AdminChrome({ children }: Props) {
                     className={`mi${pathname === href ? " on" : ""}`}
                     href={href}
                     key={href}
+                    onClick={() => setSidebarOpen(false)}
                   >
                     <Icon className="ic" />
                     {label}
@@ -170,6 +186,9 @@ export function AdminChrome({ children }: Props) {
         </aside>
         <div className="main">
           <header className="topbar">
+            <button type="button" className="ibtn dash-menu-btn" onClick={() => setSidebarOpen((value) => !value)} aria-label="মেনু খুলুন বা বন্ধ করুন">
+              <Menu className="ic sm" />
+            </button>
             <span className="pt">{titleFor(pathname)}</span>
             <span style={{ flex: 1 }} />
             <div className="tuser">
