@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AppProviders } from "@/components/providers/app-providers";
 import { AdminChrome } from "@/components/layout/admin-chrome";
 import "./globals.css";
@@ -34,7 +35,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <AppProviders>
-          <AdminChrome>{children}</AdminChrome>
+          <Suspense fallback={<div className="dadmin" aria-hidden="true" />}>
+            <AdminChrome>{children}</AdminChrome>
+          </Suspense>
         </AppProviders>
       </body>
     </html>
