@@ -218,7 +218,21 @@
 .dadmin .statlink{text-decoration:none;color:inherit;display:block}
 @media (max-width:820px){
   .dadmin .app.full .side{display:none}
-  .dadmin .app.full .side.open{display:flex;position:fixed;inset:0 auto 0 0;z-index:60;height:100vh;box-shadow:8px 0 30px rgba(11,39,64,.35)}
+  .dadmin .app.full .side.open{display:flex;position:fixed;inset:0 auto 0 0;z-index:60;height:100vh;width:min(292px, calc(100vw - 42px));flex-basis:min(292px, calc(100vw - 42px));box-shadow:8px 0 30px rgba(11,39,64,.35)}
+  .dadmin .app.full .main{width:100%}
+  .dadmin .content{overflow-x:hidden}
+  .dadmin .chead{align-items:flex-start}
+  .dadmin .chead .sp{display:none}
+  .dadmin .chead .btn{width:100%;justify-content:center}
+  .dadmin .filterbar{align-items:stretch}
+  .dadmin .filterbar .fld,.dadmin .filterbar .fld.grow{width:100%;min-width:100%}
+  .dadmin .filterbar .btn{width:100%;justify-content:center}
+  .dadmin .topbar .tuser{margin-left:auto}
+  .dadmin .topbar .tuser .nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+  .dadmin .tbl{font-size:13px}
+  .dadmin .tbl th,.dadmin .tbl td{padding:9px 10px}
+  .dadmin .modal-wrap{padding:12px}
+  .dadmin .modal{padding:16px}
 }
 .dadmin .dash-menu-btn{display:none}
 @media (max-width:820px){ .dadmin .dash-menu-btn{display:inline-flex} }
