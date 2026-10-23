@@ -5,8 +5,8 @@
         --shadow:0 1px 3px rgba(15,49,81,.08);}
 .dadmin *{box-sizing:border-box}
 .dadmin, .dadmin{margin:0;padding:0}
-.dadmin{font-family:"Hind Siliguri","Noto Sans Bengali",system-ui,sans-serif;color:var(--ink);background:#E9EEF3;font-size:16px;line-height:1.55}
-.dadmin button{font:inherit}
+.dadmin{font-family:"Hind Siliguri","Noto Sans Bengali","Nirmala UI","Vrinda",system-ui,sans-serif;color:var(--ink);background:#E9EEF3;font-size:16px;line-height:1.65;font-optical-sizing:auto;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+.dadmin button,.dadmin input,.dadmin textarea,.dadmin select{font-family:inherit;font-feature-settings:"kern" 1,"liga" 1}.dadmin button{font:inherit;letter-spacing:.01em}.dadmin h1,.dadmin h2,.dadmin h3,.dadmin h4,.dadmin p{margin-block-start:0}.dadmin h1,.dadmin h2,.dadmin h3,.dadmin h4{line-height:1.4;letter-spacing:-.01em}
 .dadmin .ic{width:20px;height:20px;flex:0 0 auto}
 .dadmin .ic.sm{width:16px;height:16px}
 .dadmin .ic.lg{width:26px;height:26px}
