@@ -27,8 +27,7 @@ export default function AttendanceReportsPage() {
     );
   }
   return (
-    <main className="admin-page">
-      <div className="admin-page-inner">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>উপস্থিতি পর্যবেক্ষণ</p>
@@ -38,63 +37,70 @@ export default function AttendanceReportsPage() {
             <Badge variant="success">Threshold {report.threshold ?? 75}%</Badge>
           )}
         </div>
-        <Card>
+        <Card className="card">
           <CardHeader>
             <CardTitle>সময়সীমা নির্বাচন</CardTitle>
           </CardHeader>
-          <CardContent className="report-filters">
-            <Input
+          <CardContent className="filterbar">
+            <Input className="inp"
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
             />
-            <Input
+            <Input className="inp"
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
             />
-            <Button onClick={() => void load()}>রিপোর্ট দেখুন</Button>
+            <Button className="btn" onClick={() => void load()}>রিপোর্ট দেখুন</Button>
           </CardContent>
         </Card>
         {report && (
-          <div className="attendance-report-grid">
-            <Card>
+          <div className="g2" style={{ alignItems: "start" }}>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>দৈনিক সারাংশ</CardTitle>
               </CardHeader>
               <CardContent>
                 {(report.dailySummary ?? []).map((row) => (
-                  <div className="report-day" key={row.date}>
-                    <span>{row.date}</span>
-                    <div>
-                      <i style={{ width: `${row.percentage}%` }} />
-                      <small>
-                        {row.percentage}% · {row.present}/{row.total}
-                      </small>
+                  <div className="listrow" key={row.date}>
+                    <span className="num" style={{ minWidth: 96 }}>{row.date}</span>
+                    <div className="grow">
+                      <div className="bar">
+                        <i className="g" style={{ width: `${row.percentage}%` }} />
+                      </div>
                     </div>
+                    <b className="num">
+                      {row.percentage}% · {row.present}/{row.total}
+                    </b>
                   </div>
                 ))}
+                {(report.dailySummary ?? []).length === 0 && (
+                  <p className="admin-empty">এই সময়সীমায় কোনো তথ্য নেই।</p>
+                )}
               </CardContent>
             </Card>
-            <Card>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>মাসিক সারাংশ</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="report-total">
-                  <strong>{report.monthlySummary?.present ?? 0}</strong>
-                  <span>
-                    উপস্থিতি / {report.monthlySummary?.total ?? 0} মোট
-                  </span>
+                <div className="stat">
+                  <div>
+                    <div className="v num">{report.monthlySummary?.present ?? 0}</div>
+                    <div className="l">
+                      উপস্থিতি / {report.monthlySummary?.total ?? 0} মোট
+                    </div>
+                  </div>
                 </div>
-                <div className="report-threshold">
-                  Admin threshold: {report.threshold ?? 75}%
-                </div>
-                <h3 className="mt-6 font-bold text-primary-800">কম উপস্থিতি</h3>
+                <p className="alert b" style={{ marginTop: 12 }}>
+                  কম উপস্থিতির সীমা (threshold): {report.threshold ?? 75}%
+                </p>
+                <h3 className="ct" style={{ marginTop: 16 }}>কম উপস্থিতি</h3>
                 {(report.lowAttendance ?? []).map((row) => (
-                  <div className="low-attendance-row" key={row.studentId}>
-                    <span>{row.studentId}</span>
-                    <Badge variant="destructive">{row.percentage}%</Badge>
+                  <div className="listrow" key={row.studentId}>
+                    <span className="grow num">{row.studentId}</span>
+                    <span className="chip r">{row.percentage}%</span>
                   </div>
                 ))}
                 {!(report.lowAttendance ?? []).length && (
@@ -106,7 +112,6 @@ export default function AttendanceReportsPage() {
             </Card>
           </div>
         )}
-      </div>
-    </main>
+    </div>
   );
 }

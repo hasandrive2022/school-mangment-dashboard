@@ -10,21 +10,25 @@ export default function DemoResetPage() {
     setMessage(response.ok ? "ডেমো রিসেট শুরু হয়েছে" : "রিসেট করা যায়নি");
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-8">
-      <Card className="mx-auto max-w-xl">
+    <div className="dstack" style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
+      <Card className="card">
         <CardHeader>
           <CardTitle>ডেমো ডেটা রিসেট</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4 text-sm text-neutral-600">
+          <p className="alert w" style={{ marginBottom: 16 }}>
             শুধু EIIN 123456 ডেমো স্কুলের ডেটা মুছে পুনরায় seed হবে।
           </p>
-          <Button variant="destructive" onClick={() => void reset()}>
+          <Button variant="destructive" className="btn dgr" onClick={() => void reset()}>
             রিসেট করুন
           </Button>
-          {message && <p className="mt-3">{message}</p>}
+          {message && (
+            <p className="alert b" style={{ marginTop: 14 }}>
+              {message}
+            </p>
+          )}
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

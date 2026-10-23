@@ -17,28 +17,43 @@ export default function TeacherPasswordPage() {
     );
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[600px]">
-        <h1 className="text-2xl font-bold text-primary-800">
-          শিক্ষকের পাসওয়ার্ড রিসেট
-        </h1>
-        <div className="mt-6 grid gap-4 rounded-lg bg-white p-6">
-          <Input
-            placeholder="শিক্ষক ID"
-            value={teacherId}
-            onChange={(e) => setTeacherId(e.target.value)}
-          />
-          <Input
-            type="password"
-            minLength={8}
-            placeholder="নতুন পাসওয়ার্ড"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <Button onClick={() => void reset()}>রিসেট করুন</Button>
-          {message && <p>{message}</p>}
+    <div className="dstack" style={{ maxWidth: 560 }}>
+      <div className="chead">
+        <div>
+          <h2 className="dpage-title">শিক্ষকের পাসওয়ার্ড রিসেট</h2>
+          <p className="cs">শিক্ষকের ID দিয়ে নতুন পাসওয়ার্ড সেট করুন (কমপক্ষে ৮ অক্ষর)।</p>
         </div>
       </div>
-    </main>
+      <div className="card">
+        <div className="dstack" style={{ gap: 14 }}>
+          <div>
+            <label className="lbl">শিক্ষক ID</label>
+            <Input
+              className="inp"
+              placeholder="শিক্ষক ID"
+              value={teacherId}
+              onChange={(e) => setTeacherId(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="lbl">নতুন পাসওয়ার্ড</label>
+            <Input
+              className="inp"
+              type="password"
+              minLength={8}
+              placeholder="নতুন পাসওয়ার্ড"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <Button className="btn" onClick={() => void reset()}>
+              রিসেট করুন
+            </Button>
+          </div>
+          {message && <p className="alert b">{message}</p>}
+        </div>
+      </div>
+    </div>
   );
 }

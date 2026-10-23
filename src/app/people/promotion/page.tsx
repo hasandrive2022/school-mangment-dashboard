@@ -32,8 +32,7 @@ export default function PromotionPage() {
     );
   }
   return (
-    <main className="admin-page">
-      <div className="admin-page-inner promotion-page">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>People · Academic transition</p>
@@ -43,36 +42,35 @@ export default function PromotionPage() {
             নির্বাচিত শিক্ষার্থীদের নতুন সেশনে নিন
           </span>
         </div>
-        <Card>
+        <Card className="card">
           <CardHeader>
             <CardTitle>প্রমোশন সেটআপ</CardTitle>
             <p>একাধিক শিক্ষার্থী ID কমা দিয়ে লিখুন।</p>
           </CardHeader>
           <CardContent className="promotion-form">
-            <Input
+            <Input className="inp"
               placeholder="শিক্ষার্থী ID ১, শিক্ষার্থী ID ২"
               value={studentIds}
               onChange={(e) => setStudentIds(e.target.value)}
             />
-            <Input
+            <Input className="inp"
               placeholder="নতুন সেশন ID"
               value={sessionId}
               onChange={(e) => setSessionId(e.target.value)}
             />
-            <Input
+            <Input className="inp"
               placeholder="নতুন শ্রেণি ID"
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             />
-            <Button onClick={() => void promote()}>প্রমোট করুন</Button>
+            <Button className="btn" onClick={() => void promote()}>প্রমোট করুন</Button>
             {message && <p className="text-accent-600">{message}</p>}
           </CardContent>
         </Card>
-        <div className="promotion-note">
+        <div className="alert b promotion-note">
           প্রমোশনের পর শিক্ষার্থীর registration number অপরিবর্তিত থাকে; শুধু
           session ও class বদলায়।
         </div>
-      </div>
-    </main>
+    </div>
   );
 }

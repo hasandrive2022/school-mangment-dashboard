@@ -106,8 +106,7 @@ export default function ResultsPage() {
     );
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1180px]">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>পরীক্ষা ও মূল্যায়ন</p>
@@ -117,45 +116,45 @@ export default function ResultsPage() {
         </div>
         <div className="results-layout">
           <section>
-            <Card>
+            <Card className="card">
               <CardHeader>
-                <CardTitle>পরীক্ষা ফর্ম</CardTitle>
+                <CardTitle>পরীক্ষা ফর্ম — নতুন পরীক্ষা</CardTitle>
               </CardHeader>
               <CardContent className="results-form">
-                <Input
+                <Input className="inp"
                   placeholder="পরীক্ষার নাম"
                   value={form.nameBn}
                   onChange={(event) =>
                     setForm({ ...form, nameBn: event.target.value })
                   }
                 />
-                <Input
+                <Input className="inp"
                   placeholder="শ্রেণি ID"
                   value={form.classId}
                   onChange={(event) =>
                     setForm({ ...form, classId: event.target.value })
                   }
                 />
-                <Input
+                <Input className="inp"
                   placeholder="সেশন ID"
                   value={form.sessionId}
                   onChange={(event) =>
                     setForm({ ...form, sessionId: event.target.value })
                   }
                 />
-                <Input
+                <Input className="inp"
                   type="date"
                   value={form.examDate}
                   onChange={(event) =>
                     setForm({ ...form, examDate: event.target.value })
                   }
                 />
-                <Button onClick={() => void createExam()}>
+                <Button className="btn" onClick={() => void createExam()}>
                   পরীক্ষা সংরক্ষণ করুন
                 </Button>
               </CardContent>
             </Card>
-            <Card className="mt-5">
+            <Card className="card">
               <CardHeader>
                 <CardTitle>পরীক্ষাসমূহ</CardTitle>
               </CardHeader>
@@ -179,19 +178,19 @@ export default function ResultsPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="btn gho sm"
                           onClick={() => void publish(exam.id)}
                         >
                           {exam.isPublished ? "আপডেট" : "প্রকাশ করুন"}
                         </Button>
-                        <Input
-                          className="w-32"
+                        <Input className="inp w-32"
                           placeholder="Class ID"
                           value={processClass}
                           onChange={(event) =>
                             setProcessClass(event.target.value)
                           }
                         />
-                        <Button size="sm" onClick={() => void process(exam.id)}>
+                        <Button size="sm" className="btn sm" onClick={() => void process(exam.id)}>
                           Process
                         </Button>
                       </div>
@@ -204,62 +203,74 @@ export default function ResultsPage() {
             </Card>
           </section>
           <section>
-            <Card>
+            <Card className="card">
               <CardHeader>
-                <CardTitle>বাংলাদেশ বোর্ড গ্রেডিং স্কেল</CardTitle>
+                <CardTitle>গ্রেডিং স্কেল</CardTitle>
                 <p className="text-sm text-neutral-600">
                   এই স্কেল database থেকে আসে; hardcoded নয়।
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="scale-table">
-                  {scale.map((row) => (
-                    <div className="scale-row" key={row.id}>
-                      <span>
-                        {row.minMarks}–{row.maxMarks}
-                      </span>
-                      <b>{row.letter}</b>
-                      <span>GPA {row.gpa}</span>
-                    </div>
-                  ))}
+                <div className="tw">
+                  <table className="tbl" style={{ minWidth: 0 }}>
+                    <thead>
+                      <tr>
+                        <th className="c">নম্বরের পরিসর</th>
+                        <th className="c">লেটার গ্রেড</th>
+                        <th className="c">GPA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scale.map((row) => (
+                        <tr key={row.id}>
+                          <td className="c num">
+                            {row.minMarks}–{row.maxMarks}
+                          </td>
+                          <td className="c">
+                            <b>{row.letter}</b>
+                          </td>
+                          <td className="c num">{row.gpa}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
                 <div className="scale-add">
-                  <Input
+                  <Input className="inp"
                     placeholder="Min"
                     value={newScale.minMarks}
                     onChange={(event) =>
                       setNewScale({ ...newScale, minMarks: event.target.value })
                     }
                   />
-                  <Input
+                  <Input className="inp"
                     placeholder="Max"
                     value={newScale.maxMarks}
                     onChange={(event) =>
                       setNewScale({ ...newScale, maxMarks: event.target.value })
                     }
                   />
-                  <Input
+                  <Input className="inp"
                     placeholder="Letter"
                     value={newScale.letter}
                     onChange={(event) =>
                       setNewScale({ ...newScale, letter: event.target.value })
                     }
                   />
-                  <Input
+                  <Input className="inp"
                     placeholder="GPA"
                     value={newScale.gpa}
                     onChange={(event) =>
                       setNewScale({ ...newScale, gpa: event.target.value })
                     }
                   />
-                  <Button onClick={() => void addScale()}>সারি যোগ</Button>
+                  <Button className="btn" onClick={() => void addScale()}>সারি যোগ</Button>
                 </div>
               </CardContent>
             </Card>
           </section>
         </div>
-        {message && <p className="mt-4 text-accent-600">{message}</p>}
-      </div>
-    </main>
+        {message && <p className="alert g">{message}</p>}
+    </div>
   );
 }

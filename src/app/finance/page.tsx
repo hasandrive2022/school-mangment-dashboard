@@ -115,8 +115,7 @@ export default function FinancePage() {
     }
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1200px]">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>হিসাব ও সংগ্রহ</p>
@@ -125,41 +124,49 @@ export default function FinancePage() {
           <Badge variant="success">লাইভ হিসাব</Badge>
         </div>
         <div className="finance-summary">
-          <div>
-            <small>মোট ইভেন্ট</small>
-            <strong>{events.length}</strong>
+          <div className="card stat">
+            <div>
+              <div className="v num">{events.length}</div>
+              <div className="l">মোট ইভেন্ট</div>
+            </div>
           </div>
-          <div>
-            <small>দেখানো বকেয়া</small>
-            <strong>{dues.length}</strong>
+          <div className="card stat">
+            <div>
+              <div className="v num">{dues.length}</div>
+              <div className="l">দেখানো বকেয়া</div>
+            </div>
           </div>
-          <div>
-            <small>পরিশোধিত</small>
-            <strong>
-              {dues.filter((row) => row.status === "PAID").length}
-            </strong>
+          <div className="card stat">
+            <div>
+              <div className="v num">
+                {dues.filter((row) => row.status === "PAID").length}
+              </div>
+              <div className="l">পরিশোধিত</div>
+            </div>
           </div>
-          <div>
-            <small>আংশিক</small>
-            <strong>
-              {dues.filter((row) => row.status === "PARTIAL").length}
-            </strong>
+          <div className="card stat">
+            <div>
+              <div className="v num">
+                {dues.filter((row) => row.status === "PARTIAL").length}
+              </div>
+              <div className="l">আংশিক</div>
+            </div>
           </div>
         </div>
         <div className="finance-layout">
           <section>
-            <Card>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>নতুন ফি ইভেন্ট</CardTitle>
                 <p>প্রতি শ্রেণির আলাদা amount JSON-এ দিন।</p>
               </CardHeader>
               <CardContent className="finance-form">
-                <Input
+                <Input className="inp"
                   placeholder="ইভেন্টের নাম"
                   value={form.nameBn}
                   onChange={(e) => setForm({ ...form, nameBn: e.target.value })}
                 />
-                <Select
+                <Select className="sel"
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
@@ -177,14 +184,14 @@ export default function FinancePage() {
                     }
                   />
                 </div>
-                <Input
+                <Input className="inp"
                   type="date"
                   value={form.dueDate}
                   onChange={(e) =>
                     setForm({ ...form, dueDate: e.target.value })
                   }
                 />
-                <Input
+                <Input className="inp"
                   type="number"
                   placeholder="দেরি ফি (পয়সা)"
                   value={form.lateFee}
@@ -192,20 +199,19 @@ export default function FinancePage() {
                     setForm({ ...form, lateFee: e.target.value })
                   }
                 />
-                <Input
-                  className="finance-wide"
+                <Input className="inp finance-wide"
                   placeholder={'[{"classId":"...","amount":5000}]'}
                   value={form.classes}
                   onChange={(e) =>
                     setForm({ ...form, classes: e.target.value })
                   }
                 />
-                <Button onClick={() => void saveEvent()}>
+                <Button className="btn" onClick={() => void saveEvent()}>
                   ইভেন্ট সংরক্ষণ করুন
                 </Button>
               </CardContent>
             </Card>
-            <Card className="mt-5">
+            <Card className="card">
               <CardHeader>
                 <CardTitle>ইভেন্ট তালিকা</CardTitle>
               </CardHeader>
@@ -221,6 +227,7 @@ export default function FinancePage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="btn gho sm"
                           onClick={() => void copyEvent(event.id)}
                         >
                           পরবর্তী মাসে কপি
@@ -235,28 +242,28 @@ export default function FinancePage() {
             </Card>
           </section>
           <section>
-            <Card>
+            <Card className="card">
               <CardHeader>
                 <CardTitle>বকেয়া ও সংগ্রহ</CardTitle>
                 <p>শ্রেণি, শাখা ও status দিয়ে খুঁজুন।</p>
               </CardHeader>
               <CardContent>
                 <div className="finance-filters">
-                  <Input
+                  <Input className="inp"
                     placeholder="শ্রেণি ID"
                     value={filters.classId}
                     onChange={(e) =>
                       setFilters({ ...filters, classId: e.target.value })
                     }
                   />
-                  <Input
+                  <Input className="inp"
                     placeholder="শাখা ID"
                     value={filters.sectionId}
                     onChange={(e) =>
                       setFilters({ ...filters, sectionId: e.target.value })
                     }
                   />
-                  <Select
+                  <Select className="sel"
                     value={filters.status}
                     onChange={(e) =>
                       setFilters({ ...filters, status: e.target.value })
@@ -267,10 +274,10 @@ export default function FinancePage() {
                     <option value="PARTIAL">আংশিক</option>
                     <option value="PAID">পরিশোধিত</option>
                   </Select>
-                  <Button onClick={() => void loadDues()}>ফিল্টার</Button>
+                  <Button className="btn gho" onClick={() => void loadDues()}>ফিল্টার</Button>
                 </div>
-                <div className="finance-table-wrap">
-                  <table className="finance-table">
+                <div className="tw">
+                  <table className="tbl finance-table">
                     <thead>
                       <tr>
                         <th>শিক্ষার্থী</th>
@@ -308,6 +315,7 @@ export default function FinancePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              className="btn sec sm"
                               onClick={() =>
                                 setPayment({
                                   id: row.id,
@@ -334,12 +342,12 @@ export default function FinancePage() {
               </CardContent>
             </Card>
             {payment.id && (
-              <Card className="collection-card mt-5">
+              <Card className="card collection-card">
                 <CardHeader>
                   <CardTitle>পেমেন্ট গ্রহণ ও রসিদ</CardTitle>
                 </CardHeader>
                 <CardContent className="finance-form">
-                  <Input
+                  <Input className="inp"
                     type="number"
                     value={payment.amount}
                     onChange={(e) =>
@@ -347,7 +355,7 @@ export default function FinancePage() {
                     }
                     placeholder="পরিমাণ (পয়সা)"
                   />
-                  <Select
+                  <Select className="sel"
                     value={payment.method}
                     onChange={(e) =>
                       setPayment({ ...payment, method: e.target.value })
@@ -357,7 +365,7 @@ export default function FinancePage() {
                     <option>বিকাশ</option>
                     <option>ব্যাংক</option>
                   </Select>
-                  <Button onClick={() => void pay()}>
+                  <Button className="btn grn" onClick={() => void pay()}>
                     সংরক্ষণ ও রসিদ তৈরি
                   </Button>
                 </CardContent>
@@ -365,8 +373,7 @@ export default function FinancePage() {
             )}
           </section>
         </div>
-        {message && <p className="mt-4 text-accent-600">{message}</p>}
-      </div>
-    </main>
+        {message && <p className="alert g">{message}</p>}
+    </div>
   );
 }

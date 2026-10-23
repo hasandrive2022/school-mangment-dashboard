@@ -26,10 +26,11 @@ export function SignOutButton() {
     <Button
       type="button"
       variant="outline"
+      className="btn gho sm"
       onClick={signOut}
       disabled={pending}
     >
-      {pending ? "Signing out…" : "Sign out"}
+      {pending ? "লগআউট হচ্ছে…" : "লগআউট"}
     </Button>
   );
 }

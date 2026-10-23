@@ -1,7 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -65,8 +66,7 @@ export default function AdmissionsPage() {
     await load();
   }
   return (
-    <main className="min-h-screen bg-neutral-50 p-4 md:p-8">
-      <div className="mx-auto max-w-[1100px]">
+    <div className="dstack">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-primary-800">ভর্তি আবেদন</h1>
@@ -115,20 +115,21 @@ export default function AdmissionsPage() {
                 </button>
               ))
             ) : (
-              <div className="rounded-lg border bg-white p-8 text-center text-neutral-600">
-                কোনো আবেদন নেই।
-              </div>
+              <div className="card admin-empty">কোনো আবেদন নেই।</div>
             )}
           </section>
-          <section className="admission-detail rounded-lg border bg-white p-6">
+          <section className="card admission-detail">
             {selected ? (
               <>
                 <div className="flex items-start gap-4 border-b pb-5">
                   {selected.photoUrl ? (
-                    <img
+                    <Image
                       className="admission-photo"
                       src={selected.photoUrl}
                       alt="আবেদনকারীর ছবি"
+                      width={96}
+                      height={96}
+                      unoptimized
                     />
                   ) : (
                     <div className="admission-photo photo-empty">ছবি নেই</div>
@@ -170,12 +171,14 @@ export default function AdmissionsPage() {
                 {selected.status === "PENDING" && (
                   <div className="flex gap-2 border-t pt-5">
                     <Button
+                      className="btn grn"
                       onClick={() => void review(selected.id, "APPROVED")}
                     >
                       অনুমোদন
                     </Button>
                     <Button
                       variant="destructive"
+                      className="btn dgr"
                       onClick={() => void review(selected.id, "REJECTED")}
                     >
                       বাতিল
@@ -190,8 +193,7 @@ export default function AdmissionsPage() {
             )}
           </section>
         </div>
-        {message && <p className="mt-4 text-accent-600">{message}</p>}
-      </div>
-    </main>
+        {message && <p className="alert g">{message}</p>}
+    </div>
   );
 }

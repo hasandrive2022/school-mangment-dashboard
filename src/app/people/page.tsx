@@ -1,9 +1,9 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 type Row = Record<string, unknown> & { id: string };
 const tabs = [
   ["students", "শিক্ষার্থী"],
@@ -47,87 +47,114 @@ export default function PeoplePage() {
     }
   }
   return (
-    <main className="admin-page">
-      <div className="admin-page-inner">
-        <div className="admin-page-heading">
-          <div>
-            <p>মানবসম্পদ ও একাডেমিক রেকর্ড</p>
-            <h1>শিক্ষার্থী ও শিক্ষক</h1>
-          </div>
-          <Badge variant="success">{rows.length}টি রেকর্ড</Badge>
+    <div className="dstack">
+      <div className="chead">
+        <div>
+          <h2 className="dpage-title">শিক্ষার্থী ও শিক্ষক</h2>
+          <p className="cs">মানবসম্পদ ও একাডেমিক রেকর্ড</p>
         </div>
-        <div className="people-tabs">
-          {tabs.map(([key, label]) => (
-            <Button
-              className="shrink-0"
-              variant={tab === key ? "default" : "ghost"}
-              size="sm"
-              key={key}
-              onClick={() => setTab(key)}
-              type="button"
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {tabs.find(([key]) => key === tab)?.[1]} যোগ করুন
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={create} className="people-create-form">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="নাম"
-                required
-              />
-              <Button type="submit">+ যোগ করুন</Button>
-              {message && (
-                <span className="text-sm text-accent-600">{message}</span>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-        <Card className="mt-5">
-          <CardHeader>
-            <CardTitle>রেকর্ড তালিকা</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="people-list">
-              {rows.map((row) => (
-                <div className="people-row" key={row.id}>
-                  <div>
-                    <b>
-                      {String(
-                        row.displayNameBn ??
-                          row.nameBn ??
-                          row.teacherCode ??
-                          row.designation ??
-                          row.id,
-                      )}
-                    </b>
-                    <small>
-                      {String(
-                        row.teacherCode ??
-                          row.designation ??
-                          row.registrationNumber ??
-                          "সক্রিয় রেকর্ড",
-                      )}
-                    </small>
-                  </div>
-                  <Badge variant="secondary">সক্রিয়</Badge>
-                </div>
-              ))}
-              {rows.length === 0 && (
-                <p className="admin-empty">কোনো রেকর্ড নেই।</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <span className="sp" />
+        <Badge variant="success">{rows.length}টি রেকর্ড</Badge>
+        <Link className="btn sec sm" href="/people/import">
+          Excel/CSV ইমপোর্ট
+        </Link>
+        <Link className="btn gho sm" href="/people/promotion">
+          প্রমোশন
+        </Link>
       </div>
-    </main>
+      <div className="tabs">
+        {tabs.map(([key, label]) => (
+          <Button
+            className={tab === key ? "on" : ""}
+            variant="ghost"
+            size="sm"
+            key={key}
+            onClick={() => setTab(key)}
+            type="button"
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+      <div className="card">
+        <div className="chead">
+          <h3 className="ct">
+            {tabs.find(([key]) => key === tab)?.[1]} যোগ করুন
+          </h3>
+        </div>
+        <form onSubmit={create} className="rowflex">
+          <Input
+            className="inp"
+            style={{ flex: 1, minWidth: 220 }}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="নাম"
+            required
+          />
+          <Button type="submit" className="btn">
+            + যোগ করুন
+          </Button>
+          {message && <span className="small grn-t b">{message}</span>}
+        </form>
+      </div>
+      <div className="card flush">
+        <div className="chead" style={{ padding: "16px 18px 0" }}>
+          <h3 className="ct">রেকর্ড তালিকা</h3>
+          <span className="sp" />
+          <span className="chip b">{rows.length}টি রেকর্ড</span>
+        </div>
+        {rows.length === 0 ? (
+          <p className="admin-empty" style={{ margin: "0 18px 18px" }}>
+            কোনো রেকর্ড নেই।
+          </p>
+        ) : (
+          <div className="tw">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>নাম</th>
+                  <th>পরিচিতি / কোড</th>
+                  <th>অবস্থা</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const name = String(
+                    row.displayNameBn ??
+                      row.nameBn ??
+                      row.teacherCode ??
+                      row.designation ??
+                      row.id,
+                  );
+                  const sub = String(
+                    row.teacherCode ??
+                      row.designation ??
+                      row.registrationNumber ??
+                      "সক্রিয় রেকর্ড",
+                  );
+                  return (
+                    <tr key={row.id}>
+                      <td>
+                        <div className="person">
+                          <span className="av">{Array.from(name)[0]}</span>
+                          <div>
+                            <div className="nm">{name}</div>
+                            <div className="ds">{sub}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="num">{sub}</td>
+                      <td>
+                        <span className="chip g">সক্রিয়</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

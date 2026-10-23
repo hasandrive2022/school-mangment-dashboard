@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
-  Bell,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -12,10 +12,11 @@ import {
   LayoutDashboard,
   Menu,
   Settings,
+  User,
   Users,
+  Wallet,
 } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Button } from "@/components/ui/button";
 
 type Props = {
   id: string;
@@ -127,16 +128,24 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
           {
             title: "একাডেমিক",
             items: [
-              { label: "শিক্ষার্থী ও শিক্ষক", href: "/people", icon: Users },
-              { label: "একাডেমিক কাঠামো", href: "/academics", icon: BookOpen },
+              {
+                label: "শিক্ষার্থী ও শিক্ষক",
+                href: "/dashboard/people",
+                icon: Users,
+              },
+              {
+                label: "একাডেমিক কাঠামো",
+                href: "/dashboard/academics",
+                icon: BookOpen,
+              },
               {
                 label: "উপস্থিতি রিপোর্ট",
-                href: "/attendance/reports",
+                href: "/dashboard/attendance/reports",
                 icon: CalendarDays,
               },
               {
                 label: "পরীক্ষা ও ফলাফল",
-                href: "/results",
+                href: "/dashboard/results",
                 icon: GraduationCap,
               },
             ],
@@ -144,12 +153,24 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
           {
             title: "অর্থ ও ভর্তি",
             items: [
-              { label: "ফি ও সংগ্রহ", href: "/finance", icon: CreditCard },
-              { label: "বেতন", href: "/salary", icon: ClipboardList },
-              { label: "আয়–ব্যয়", href: "/ledger", icon: FileText },
+              {
+                label: "ফি ও সংগ্রহ",
+                href: "/dashboard/finance",
+                icon: CreditCard,
+              },
+              {
+                label: "বেতন",
+                href: "/dashboard/salary",
+                icon: ClipboardList,
+              },
+              {
+                label: "আয়–ব্যয়",
+                href: "/dashboard/ledger",
+                icon: FileText,
+              },
               {
                 label: "ভর্তি আবেদন",
-                href: "/admissions",
+                href: "/dashboard/admissions",
                 icon: ClipboardList,
               },
             ],
@@ -157,10 +178,14 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
           {
             title: "ওয়েবসাইট",
             items: [
-              { label: "কনটেন্ট", href: "/content", icon: FileText },
+              {
+                label: "কনটেন্ট",
+                href: "/dashboard/content",
+                icon: FileText,
+              },
               {
                 label: "বিদ্যালয়ের সেটিংস",
-                href: "/settings",
+                href: "/dashboard/settings",
                 icon: Settings,
               },
             ],
@@ -182,206 +207,334 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
             items: [
               {
                 label: "উপস্থিতি গ্রহণ",
-                href: "/attendance",
+                href: "/dashboard/attendance",
                 icon: CalendarDays,
               },
               {
                 label: "নম্বর এন্ট্রি",
-                href: "/marks-entry",
+                href: "/dashboard/marks-entry",
                 icon: GraduationCap,
               },
             ],
           },
         ];
+  const feeTotal = feeSummary.paid + feeSummary.partial + feeSummary.due;
   return (
-    <div className="admin-shell flex min-h-screen bg-neutral-50">
-      <aside
-        className={`admin-sidebar ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 w-72 bg-primary-900 p-4 text-white transition-transform md:static md:translate-x-0`}
-      >
-        <div className="mb-8 border-b border-white/15 px-3 pb-5">
-          <p className="text-lg font-bold">{schoolName}</p>
-          <p className="text-xs text-primary-100">প্রশাসন প্যানেল</p>
+    <div className="app full">
+      <aside className={`side${sidebarOpen ? " open" : ""}`}>
+        <div className="brand">
+          <span className="logo">
+            <GraduationCap className="ic lg" />
+          </span>
+          <div>
+            <div className="bn">{schoolName}</div>
+            <div className="be">
+              {role === "TEACHER" ? "শিক্ষক প্যানেল" : "প্রশাসন প্যানেল"}
+            </div>
+          </div>
         </div>
-        <nav className="space-y-1" aria-label="প্রধান নেভিগেশন">
+        <nav aria-label="প্রধান নেভিগেশন">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="admin-nav-group">{group.title}</p>
+              <p className="sg">{group.title}</p>
               {group.items.map(({ label, href, icon: Icon }, index) => (
-                <a
+                <Link
                   href={href}
                   key={label}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm ${group.title === "ওভারভিউ" && index === 0 ? "bg-primary-600 font-semibold" : "text-primary-100 hover:bg-primary-800"}`}
+                  className={`mi${group.title === "ওভারভিউ" && index === 0 ? " on" : ""}`}
                 >
-                  <Icon className="size-5" />
+                  <Icon className="ic" />
                   {label}
-                </a>
+                </Link>
               ))}
             </div>
           ))}
         </nav>
-      </aside>
-      <div className="admin-content flex min-w-0 flex-1 flex-col">
-        <header className="admin-topbar flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 md:px-8">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              className="md:hidden"
-              onClick={() => setSidebarOpen((value) => !value)}
-            >
-              <Menu className="size-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold text-primary-800">ড্যাশবোর্ড</h1>
-              <p className="text-sm text-neutral-600">
-                স্বাগতম, {displayNameBn}
-              </p>
+        <div className="who">
+          <span className="av">{displayNameBn.slice(0, 1)}</span>
+          <div>
+            <div className="wn">{displayNameBn}</div>
+            <div className="wr">
+              {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Bell className="size-5 text-neutral-600" />
-            <SignOutButton />
+        </div>
+      </aside>
+      <div className="main">
+        <header className="topbar">
+          <button
+            type="button"
+            className="ibtn dash-menu-btn"
+            onClick={() => setSidebarOpen((value) => !value)}
+            aria-label="মেনু খুলুন/বন্ধ করুন"
+          >
+            <Menu className="ic sm" />
+          </button>
+          <span className="pt">ড্যাশবোর্ড</span>
+          <span style={{ flex: 1 }} />
+          <div className="tuser">
+            <span className="av">{displayNameBn.slice(0, 1)}</span>
+            <div>
+              <div className="nm">{displayNameBn}</div>
+              <div className="rl">
+                {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"} · {schoolName}
+              </div>
+            </div>
           </div>
+          <SignOutButton />
         </header>
-        <main className="mx-auto w-full max-w-[1200px] flex-1 space-y-6 p-4 md:p-8">
-          <div className="rounded-lg bg-primary-800 p-6 text-white">
-            <p className="text-sm text-primary-100">
-              {role === "ADMIN" ? "প্রশাসক" : "শিক্ষক"}
-            </p>
-            <h2 className="mt-1 text-2xl font-bold">
-              বিদ্যালয়ের কার্যক্রম এক নজরে
-            </h2>
-            <p className="mt-2 text-sm text-primary-100">
-              {schoolName} এর লাইভ কার্যক্রম এখান থেকে পরিচালনা করুন।
-            </p>
-          </div>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              label="মোট শিক্ষার্থী"
-              value={
-                statsError
-                  ? "লোড হয়নি"
-                  : studentCount === null
-                    ? "লোড হচ্ছে…"
-                    : String(studentCount)
-              }
-            />
-            <Stat
-              label="মোট শিক্ষক"
-              value={
-                statsError
-                  ? "লোড হয়নি"
-                  : teacherCount === null
-                    ? "লোড হচ্ছে…"
-                    : String(teacherCount)
-              }
-            />
-            <Stat label="আজকের উপস্থিতি" value="রিপোর্ট খুলুন" />
-            <Stat
-              label="বর্তমান ব্যালেন্স"
-              value={
-                ledgerBalance === null ? "লোড হচ্ছে…" : `৳ ${ledgerBalance}`
-              }
-            />
-          </section>
-          {role === "ADMIN" && (
-            <section className="dashboard-report-grid">
-              <div className="dashboard-report-card">
-                <div className="dashboard-report-heading">
+        <div className="content">
+          {role === "ADMIN" ? (
+            <>
+              <div className="g4">
+                <Stat
+                  label="মোট শিক্ষার্থী"
+                  value={
+                    statsError
+                      ? "লোড হয়নি"
+                      : studentCount === null
+                        ? "লোড হচ্ছে…"
+                        : String(studentCount)
+                  }
+                  icon={Users}
+                />
+                <Stat
+                  label="মোট শিক্ষক"
+                  value={
+                    statsError
+                      ? "লোড হয়নি"
+                      : teacherCount === null
+                        ? "লোড হচ্ছে…"
+                        : String(teacherCount)
+                  }
+                  icon={User}
+                />
+                <Link
+                  className="card stat statlink"
+                  href="/dashboard/attendance/reports"
+                >
                   <div>
-                    <p>সংগ্রহের অবস্থা</p>
-                    <h3>ফি ডিউস ও পেমেন্ট</h3>
+                    <div className="v" style={{ fontSize: 19 }}>
+                      রিপোর্ট খুলুন
+                    </div>
+                    <div className="l">আজকের উপস্থিতি</div>
                   </div>
-                  <a href="/finance">বিস্তারিত →</a>
-                </div>
-                <div className="dashboard-bars">
+                  <div className="ic-wrap g">
+                    <CalendarDays className="ic lg" />
+                  </div>
+                </Link>
+                <Stat
+                  label="বর্তমান ব্যালেন্স"
+                  value={
+                    ledgerBalance === null ? "লোড হচ্ছে…" : `৳ ${ledgerBalance}`
+                  }
+                  icon={Wallet}
+                />
+              </div>
+              <div className="g32">
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">ফি ডিউস ও পেমেন্ট</h3>
+                    <span className="sp" />
+                    <span className="chip b">সংগ্রহের অবস্থা</span>
+                    <Link className="btn gho sm" href="/dashboard/finance">
+                      বিস্তারিত
+                    </Link>
+                  </div>
                   <Bar
                     label="পরিশোধিত"
                     value={feeSummary.paid}
-                    color="paid"
-                    total={
-                      feeSummary.paid + feeSummary.partial + feeSummary.due
-                    }
+                    total={feeTotal}
+                    tone="g"
                   />
                   <Bar
                     label="আংশিক"
                     value={feeSummary.partial}
-                    color="partial"
-                    total={
-                      feeSummary.paid + feeSummary.partial + feeSummary.due
-                    }
+                    total={feeTotal}
+                    tone="w"
                   />
                   <Bar
                     label="বকেয়া"
                     value={feeSummary.due}
-                    color="due"
-                    total={
-                      feeSummary.paid + feeSummary.partial + feeSummary.due
-                    }
+                    total={feeTotal}
+                    tone="r"
                   />
                 </div>
-              </div>
-              <div className="dashboard-report-card">
-                <div className="dashboard-report-heading">
-                  <div>
-                    <p>দ্রুত রিপোর্ট</p>
-                    <h3>ডিফল্টার ও কার্যক্রম</h3>
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">সাম্প্রতিক বিজ্ঞপ্তি</h3>
+                    <span className="sp" />
+                    <Link className="btn gho sm" href="/dashboard/content">
+                      সব দেখুন
+                    </Link>
                   </div>
-                  <a href="/attendance/reports">রিপোর্ট →</a>
-                </div>
-                <div className="dashboard-report-list">
-                  <a href="/finance">
-                    <span>বকেয়া শিক্ষার্থী</span>
-                    <strong>{feeSummary.due}</strong>
-                  </a>
-                  <a href="/attendance/reports">
-                    <span>উপস্থিতি রিপোর্ট</span>
-                    <strong>দেখুন</strong>
-                  </a>
-                  <a href="/ledger">
-                    <span>আয়–ব্যয় রিপোর্ট</span>
-                    <strong>
+                  <div className="listrow">
+                    <span className="av">
+                      <FileText className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        {recentNotice ?? "কোনো প্রকাশিত বিজ্ঞপ্তি নেই।"}
+                      </div>
+                      <div className="small muted">
+                        সর্বশেষ প্রকাশিত বিজ্ঞপ্তি
+                      </div>
+                    </div>
+                  </div>
+                  <div className="listrow">
+                    <span className="av w">
+                      <CreditCard className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        বকেয়া শিক্ষার্থী
+                      </div>
+                      <div className="small muted">ফি সংগ্রহ বাকি আছে</div>
+                    </div>
+                    <strong className="num">{feeSummary.due}</strong>
+                  </div>
+                  <div className="listrow">
+                    <span className="av g">
+                      <BookOpen className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        আয়–ব্যয় রিপোর্ট
+                      </div>
+                      <div className="small muted">লেজার ব্যালেন্স</div>
+                    </div>
+                    <strong className="num">
                       {ledgerBalance === null ? "—" : `৳ ${ledgerBalance}`}
                     </strong>
-                  </a>
+                  </div>
                 </div>
               </div>
-            </section>
+              <div className="card">
+                <div className="chead">
+                  <h3 className="ct">অ্যাকাউন্ট তথ্য</h3>
+                </div>
+                <div className="listrow">
+                  <div className="grow muted">ইউজার আইডি</div>
+                  <b className="num">{id}</b>
+                </div>
+                <div className="listrow">
+                  <div className="grow muted">প্রতিষ্ঠান আইডি</div>
+                  <b className="num">{schoolId}</b>
+                </div>
+                <div className="listrow">
+                  <div className="grow muted">প্রতিষ্ঠান</div>
+                  <b>{schoolName}</b>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="alert b">
+                <BookOpen className="ic" />
+                <span>
+                  <b>স্বাগতম, {displayNameBn}।</b> বাম মেনু থেকে আজকের হাজিরা
+                  নিন অথবা নম্বর এন্ট্রি করুন।
+                </span>
+                <span style={{ flex: 1 }} />
+                <Link className="btn sm" href="/dashboard/attendance">
+                  হাজিরা নিন
+                </Link>
+              </div>
+              <div className="g2">
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">আমার কার্যক্রম</h3>
+                  </div>
+                  <div className="listrow">
+                    <span className="av">
+                      <CalendarDays className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        উপস্থিতি গ্রহণ
+                      </div>
+                      <div className="small muted">
+                        নিজের বরাদ্দকৃত ক্লাসের দৈনিক হাজিরা
+                      </div>
+                    </div>
+                    <Link className="btn gho sm" href="/dashboard/attendance">
+                      খুলুন
+                    </Link>
+                  </div>
+                  <div className="listrow">
+                    <span className="av">
+                      <GraduationCap className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        নম্বর এন্ট্রি
+                      </div>
+                      <div className="small muted">
+                        পরীক্ষার বিষয়ভিত্তিক নম্বর জমা দিন
+                      </div>
+                    </div>
+                    <Link className="btn gho sm" href="/dashboard/marks-entry">
+                      খুলুন
+                    </Link>
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">সাম্প্রতিক বিজ্ঞপ্তি</h3>
+                  </div>
+                  <div className="listrow">
+                    <span className="av">
+                      <FileText className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        {recentNotice ?? "কোনো প্রকাশিত বিজ্ঞপ্তি নেই।"}
+                      </div>
+                      <div className="small muted">
+                        সর্বশেষ প্রকাশিত বিজ্ঞপ্তি
+                      </div>
+                    </div>
+                  </div>
+                  <div className="chead" style={{ marginTop: 14 }}>
+                    <h3 className="ct">অ্যাকাউন্ট তথ্য</h3>
+                  </div>
+                  <div className="listrow">
+                    <div className="grow muted">ইউজার আইডি</div>
+                    <b className="num">{id}</b>
+                  </div>
+                  <div className="listrow">
+                    <div className="grow muted">প্রতিষ্ঠান</div>
+                    <b>{schoolName}</b>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
-          <section className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-lg border border-neutral-200 bg-white p-6">
-              <h3 className="font-bold text-primary-800">
-                সাম্প্রতিক বিজ্ঞপ্তি
-              </h3>
-              <p className="mt-4 text-sm text-neutral-600">
-                {recentNotice ?? "কোনো প্রকাশিত বিজ্ঞপ্তি নেই।"}
-              </p>
-            </div>
-            <div className="rounded-lg border border-neutral-200 bg-white p-6">
-              <h3 className="font-bold text-primary-800">অ্যাকাউন্ট তথ্য</h3>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-600">ইউজার আইডি</dt>
-                  <dd className="truncate font-medium">{id}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-600">প্রতিষ্ঠান আইডি</dt>
-                  <dd className="truncate font-medium">{schoolId}</dd>
-                </div>
-              </dl>
-            </div>
-          </section>
-        </main>
+        </div>
       </div>
     </div>
   );
 }
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone?: string;
+}) {
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-5">
-      <p className="text-sm text-neutral-600">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-primary-800">{value}</p>
+    <div className="card stat">
+      <div>
+        <div className="v num">{value}</div>
+        <div className="l">{label}</div>
+      </div>
+      <div className={`ic-wrap${tone ? ` ${tone}` : ""}`}>
+        <Icon className="ic lg" />
+      </div>
     </div>
   );
 }
@@ -389,25 +542,30 @@ function Bar({
   label,
   value,
   total,
-  color,
+  tone,
 }: {
   label: string;
   value: number;
   total: number;
-  color: string;
+  tone: string;
 }) {
+  const pct = total ? Math.round((value / total) * 100) : 0;
   return (
-    <div className="dashboard-bar">
-      <div>
-        <span>{label}</span>
-        <b>{value}</b>
+    <div className="listrow">
+      <div className="grow">
+        <div className="rowflex" style={{ justifyContent: "space-between" }}>
+          <span style={{ fontSize: 14.5 }}>{label}</span>
+          <b className="num">
+            {value} · {pct}%
+          </b>
+        </div>
+        <div className="bar" style={{ marginTop: 6 }}>
+          <i
+            className={tone === "w" ? "w" : tone}
+            style={{ width: `${total ? Math.max(pct, value ? 5 : 0) : 0}%` }}
+          />
+        </div>
       </div>
-      <i
-        className={color}
-        style={{
-          width: `${total ? Math.max((value / total) * 100, value ? 5 : 0) : 0}%`,
-        }}
-      />
     </div>
   );
 }

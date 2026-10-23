@@ -14,26 +14,48 @@ export async function POST(request: NextRequest) {
       { error: "ইউজারনেম ও পাসওয়ার্ড দিন" },
       { status: 400 },
     );
-  const backendUrl =
+  const backendUrl = (
     process.env.BACKEND_API_URL ??
-    "https://school-mangment-backend.vercel.app/api/v1";
-  const backendResponse = await fetch(`${backendUrl}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ identifier, password }),
-    cache: "no-store",
-  });
-  const payload: unknown = await backendResponse.json().catch(() => null);
-  if (
-    !backendResponse.ok ||
-    !payload ||
-    typeof payload !== "object" ||
-    !("data" in payload)
-  )
+    "https://school-mangment-backend.vercel.app/api/v1"
+  ).replace(/\/+$/, "");
+  let backendResponse: Response;
+  let payload: unknown;
+  try {
+    backendResponse = await fetch(`${backendUrl}/auth/login`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ identifier, password }),
+      cache: "no-store",
+    });
+    payload = await backendResponse.json().catch(() => null);
+  } catch {
     return NextResponse.json(
-      { error: "ইউজারনেম বা পাসওয়ার্ড সঠিক নয়" },
-      { status: 401 },
+      { error: "ব্যাকএন্ডে সংযোগ করা যাচ্ছে না। পরে আবার চেষ্টা করুন।" },
+      { status: 502 },
     );
+  }
+  if (!backendResponse.ok) {
+    const message =
+      payload && typeof payload === "object" && "message" in payload
+        ? (payload.message as unknown)
+        : null;
+    return NextResponse.json(
+      {
+        error:
+          typeof message === "string"
+            ? message
+            : backendResponse.status >= 500
+              ? "ব্যাকএন্ড সাময়িকভাবে unavailable।"
+              : "ইউজারনেম বা পাসওয়ার্ড সঠিক নয়",
+      },
+      { status: backendResponse.status >= 500 ? 502 : backendResponse.status },
+    );
+  }
+  if (!payload || typeof payload !== "object" || !("data" in payload))
+    return NextResponse.json({ error: "লগইন সাড়া সঠিক নয়" }, { status: 502 });
   const data = payload.data as { accessToken?: unknown; user?: unknown };
   if (typeof data.accessToken !== "string")
     return NextResponse.json({ error: "লগইন সাড়া সঠিক নয়" }, { status: 502 });

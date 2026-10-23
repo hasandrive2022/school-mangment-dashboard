@@ -24,8 +24,7 @@ export default function StudentImportPage() {
     );
   }
   return (
-    <main className="admin-page">
-      <div className="admin-page-inner import-page">
+    <div className="dstack">
         <div className="admin-page-heading">
           <div>
             <p>People · Bulk tools</p>
@@ -33,7 +32,7 @@ export default function StudentImportPage() {
           </div>
           <span className="admin-helper">প্রতি ভুল সারির রিপোর্ট থাকবে</span>
         </div>
-        <Card>
+        <Card className="card">
           <CardHeader>
             <CardTitle>CSV ডেটা প্রস্তুত করুন</CardTitle>
             <p>
@@ -42,17 +41,17 @@ export default function StudentImportPage() {
           </CardHeader>
           <CardContent>
             <Textarea
-              className="import-editor"
+              className="inp import-editor"
               value={csv}
               onChange={(e) => setCsv(e.target.value)}
             />
-            <Button className="mt-4" onClick={() => void submit()}>
+            <Button className="btn mt-4" onClick={() => void submit()}>
               আমদানি শুরু করুন
             </Button>
           </CardContent>
         </Card>
         {result && (
-          <Card className="mt-5 import-result">
+          <Card className="card import-result">
             <CardHeader>
               <CardTitle>আমদানির ফলাফল</CardTitle>
             </CardHeader>
@@ -66,7 +65,6 @@ export default function StudentImportPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </main>
+    </div>
   );
 }
