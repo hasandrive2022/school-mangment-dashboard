@@ -1142,27 +1142,53 @@ main.min-h-screen.bg-neutral-50 select {
     display: block;
   }
 }
-/* Round 9: receipt printing — while `body.printing-receipt` is set (see
-   printReceiptSheet), only the `.receipt-sheet` element is visible,
-   centered as a single A5/thermal-friendly slip. */
+/* Professional invoice surface shared by every receipt print action. */
+.invoice-sheet {
+  --invoice-ink: #172b4d;
+  --invoice-muted: #64748b;
+  --invoice-line: #d9e2ec;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px;
+  border: 1px solid var(--invoice-line);
+  border-top: 5px solid var(--p800);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--invoice-ink);
+  box-shadow: 0 10px 30px rgba(23, 43, 77, .08);
+}
+.invoice-header, .invoice-meta, .invoice-student, .invoice-table-head, .invoice-table-row, .invoice-total, .invoice-details, .invoice-balance, .invoice-footer {
+  display: flex; justify-content: space-between; gap: 18px; align-items: center;
+}
+.invoice-header { align-items: flex-start; padding-bottom: 20px; }
+.invoice-header h3 { margin: 3px 0 2px; font-size: 22px; color: var(--invoice-ink); }
+.invoice-kicker { color: var(--p800); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.invoice-subtitle, .invoice-title span, .invoice-student span, .invoice-meta span { color: var(--invoice-muted); font-size: 11px; }
+.invoice-title { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.invoice-title strong { font-size: 16px; }
+.invoice-meta { padding: 12px 0; border-top: 1px solid var(--invoice-line); border-bottom: 1px solid var(--invoice-line); }
+.invoice-meta div, .invoice-student div { display: flex; flex-direction: column; gap: 4px; }
+.invoice-student { align-items: flex-start; padding: 18px 0; }
+.invoice-table { overflow: hidden; border: 1px solid var(--invoice-line); border-radius: 7px; }
+.invoice-table-head { padding: 9px 12px; background: #f2f6fa; color: var(--invoice-muted); font-size: 11px; font-weight: 700; }
+.invoice-table-row, .invoice-total { padding: 14px 12px; }
+.invoice-table-row { border-bottom: 1px solid var(--invoice-line); }
+.invoice-total { background: #f8fafc; font-size: 13px; }
+.invoice-total strong { color: var(--p800); font-size: 18px; }
+.invoice-details, .invoice-balance { padding: 13px 0; font-size: 12px; }
+.invoice-balance { border-top: 1px dashed var(--invoice-line); }
+.invoice-footer { align-items: flex-end; margin-top: 22px; padding-top: 15px; border-top: 1px solid var(--invoice-line); }
+.invoice-signature { min-width: 130px; padding-top: 15px; border-top: 1px solid var(--invoice-ink); text-align: center; }
+.invoice-signature span, .invoice-signature small { display: block; }
+.invoice-signature small { color: var(--invoice-muted); font-size: 10px; }
 @media print {
-  body.printing-receipt * {
-    visibility: hidden;
-  }
-  body.printing-receipt .receipt-sheet,
-  body.printing-receipt .receipt-sheet * {
-    visibility: visible;
-  }
+  body.printing-receipt * { visibility: hidden; }
+  body.printing-receipt .receipt-sheet, body.printing-receipt .receipt-sheet * { visibility: visible; }
   body.printing-receipt .receipt-sheet {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    width: 480px;
-    max-width: 100%;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    position: fixed; inset: 0; width: 100%; max-width: none; margin: 0; padding: 28px;
+    border: 0; border-top: 5px solid var(--p800); border-radius: 0; box-shadow: none;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
 }
 .rich-editor {
