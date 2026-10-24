@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { bn } from "@/lib/format";
+import { UploadThingField } from "@/components/uploadthing-field";
 
 type AcademicRow = {
   id: string;
@@ -295,15 +296,12 @@ export default function NewStudentPage() {
               </div>
             </div>
             <div>
-              <label className="lbl" htmlFor="sf-photo">
-                ছবির ঠিকানা
-              </label>
-              <Input
-                id="sf-photo"
-                className="inp"
+              <label className="lbl">শিক্ষার্থীর ছবি</label>
+              <UploadThingField
+                endpoint="profileImage"
                 value={form.photoUrl}
-                onChange={(e) => set("photoUrl", e.target.value)}
-                placeholder="ছবির লিংক"
+                onChange={(photoUrl) => set("photoUrl", photoUrl)}
+                label="শিক্ষার্থীর ছবি আপলোড করুন"
               />
             </div>
           </div>

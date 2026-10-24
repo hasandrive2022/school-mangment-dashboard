@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { bn, bnDate, bnNum, takaLabel } from "@/lib/format";
+import { UploadThingField } from "@/components/uploadthing-field";
 
 type StudentRow = {
   id: string;
@@ -525,17 +526,12 @@ export default function StudentProfilePage({
                 </Select>
               </div>
               <div>
-                <label className="lbl" htmlFor="ef-photo">
-                  ছবির ঠিকানা
-                </label>
-                <Input
-                  id="ef-photo"
-                  className="inp"
+                <label className="lbl">শিক্ষার্থীর ছবি</label>
+                <UploadThingField
+                  endpoint="profileImage"
                   value={editForm.photoUrl}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, photoUrl: e.target.value })
-                  }
-                  placeholder="ছবির লিংক"
+                  onChange={(photoUrl) => setEditForm({ ...editForm, photoUrl })}
+                  label="শিক্ষার্থীর ছবি আপলোড করুন"
                 />
               </div>
               <div>
