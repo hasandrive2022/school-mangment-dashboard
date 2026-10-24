@@ -98,70 +98,53 @@ export function ReceiptView({ data }: { data: ReceiptData }) {
     .filter(Boolean)
     .join(" · ");
   return (
-    <div className="receipt receipt-sheet">
-      <div style={{ textAlign: "center" }}>
-        <b style={{ color: "var(--p800)", fontSize: 16 }}>
-          {school.nameBn || "বিদ্যালয়"}
-        </b>
-        {school.nameEn && <div className="small muted">{school.nameEn}</div>}
-        {(school.address || school.eiin) && (
-          <div className="small muted">
-            {school.address ?? ""}
-            {school.address && school.eiin ? " · " : ""}
-            {school.eiin ? `EIIN: ${bn(school.eiin)}` : ""}
-          </div>
-        )}
-        <div className="small muted" style={{ marginTop: 2 }}>
-          টাকা গ্রহণের রশিদ
+    <article className="receipt invoice-sheet receipt-sheet" aria-label="পেমেন্ট ইনভয়েস">
+      <header className="invoice-header">
+        <div>
+          <div className="invoice-kicker">OFFICIAL PAYMENT RECEIPT</div>
+          <h3>{school.nameBn || "বিদ্যালয়"}</h3>
+          {school.nameEn && <div className="invoice-subtitle">{school.nameEn}</div>}
+          {(school.address || school.eiin) && (
+            <div className="small muted">
+              {school.address ?? ""}
+              {school.address && school.eiin ? " · " : ""}
+              {school.eiin ? `EIIN: ${bn(school.eiin)}` : ""}
+            </div>
+          )}
         </div>
+        <div className="invoice-title">
+          <strong>টাকা গ্রহণের রশিদ</strong>
+          <span>মূল কপি</span>
+        </div>
+      </header>
+      <div className="invoice-meta">
+        <div><span>রশিদ নং</span><b className="num">{bn(data.receiptNumber)}</b></div>
+        <div><span>তারিখ</span><b className="num">{data.paidAt ? bn(String(data.paidAt).slice(0, 10)) : "—"}</b></div>
       </div>
-      <div className="divider" style={{ margin: "9px 0" }} />
-      <div className="rowflex" style={{ justifyContent: "space-between" }}>
-        <span>
-          রশিদ নং: <b className="num">{bn(data.receiptNumber)}</b>
-        </span>
-        <span>
-          তারিখ:{" "}
-          <span className="num">
-            {data.paidAt ? bn(String(data.paidAt).slice(0, 10)) : "—"}
-          </span>
-        </span>
+      <section className="invoice-student" aria-label="শিক্ষার্থীর তথ্য">
+        <div><span>শিক্ষার্থীর নাম</span><b>{data.studentNameBn}</b></div>
+        <div><span>শ্রেণি / শাখা</span><b>{classLine || "—"}</b></div>
+        <div><span>রেজিস্ট্রেশন নং</span><b className="num">{bn(data.registrationNumber ?? "—")}</b></div>
+      </section>
+      <div className="invoice-table">
+        <div className="invoice-table-head"><span>পরিশোধের বিবরণ</span><span>পরিমাণ</span></div>
+        <div className="invoice-table-row"><span>{data.eventNameBn}</span><b>{formatTaka(data.amount)}</b></div>
+        <div className="invoice-total"><span>সর্বমোট পরিশোধ</span><strong>{formatTaka(data.amount)}</strong></div>
       </div>
-      <div className="rowflex" style={{ justifyContent: "space-between" }}>
-        <span>
-          শিক্ষার্থী: {data.studentNameBn}
-          {classLine ? ` · ${classLine}` : ""}
-        </span>
-        <span className="num">
-          রেজি: {bn(data.registrationNumber ?? "—")}
-        </span>
-      </div>
-      <div className="rowflex" style={{ justifyContent: "space-between" }}>
-        <span>বিবরণ: {data.eventNameBn}</span>
-        <b>{formatTaka(data.amount)}</b>
-      </div>
-      <div className="rowflex" style={{ justifyContent: "space-between" }}>
+      <div className="invoice-details">
         <span>কথায়: {takaInWords(data.amount)}</span>
-        <span>মাধ্যম: {data.method ?? "—"}</span>
+        <span>পরিশোধের মাধ্যম: <b>{data.method ?? "—"}</b></span>
       </div>
       {data.remaining !== undefined && data.remaining !== null && (
-        <div className="rowflex" style={{ justifyContent: "space-between" }}>
-          <span>এই পেমেন্টের পর বাকি:</span>
-          <b>{formatTaka(data.remaining)}</b>
-        </div>
+        <div className="invoice-balance"><span>এই পেমেন্টের পর বাকি</span><b>{formatTaka(data.remaining)}</b></div>
       )}
-      {data.verifyCode && (
-        <div className="small muted" style={{ marginTop: 8 }}>
-          যাচাই কোড: <span className="num">{bn(data.verifyCode)}</span> ·
-          ওয়েবসাইটের &quot;রশিদ যাচাই&quot; পেজে এই কোড দিয়ে রশিদের সত্যতা
-          যাচাই করা যায়।
+      <footer className="invoice-footer">
+        <div>
+          {data.verifyCode && <div className="small muted">যাচাই কোড: <span className="num">{bn(data.verifyCode)}</span></div>}
+          <div className="small muted">এই রশিদটি কম্পিউটার সিস্টেমে সংরক্ষিত।</div>
         </div>
-      )}
-      {data.receivedBy && (
-        <div className="small" style={{ marginTop: 10, textAlign: "right" }}>
-          গ্রহণকারী: {data.receivedBy}
-        </div>
-      )}
-    </div>
+        {data.receivedBy && <div className="invoice-signature"><span>{data.receivedBy}</span><small>গ্রহণকারীর স্বাক্ষর</small></div>}
+      </footer>
+    </article>
   );
 }
