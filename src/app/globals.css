@@ -1161,27 +1161,41 @@ main.min-h-screen.bg-neutral-50 select {
 .invoice-header, .invoice-meta, .invoice-student, .invoice-table-head, .invoice-table-row, .invoice-total, .invoice-details, .invoice-balance, .invoice-footer {
   display: flex; justify-content: space-between; gap: 18px; align-items: center;
 }
-.invoice-header { align-items: flex-start; padding-bottom: 20px; }
-.invoice-header h3 { margin: 3px 0 2px; font-size: 22px; color: var(--invoice-ink); }
-.invoice-kicker { color: var(--p800); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.invoice-header { align-items: flex-start; padding-bottom: 24px; }
+.invoice-brand { display: flex; align-items: flex-start; gap: 12px; }
+.invoice-mark { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px; background: var(--p800); color: #fff; font-size: 22px; font-weight: 800; }
+.invoice-header h3 { margin: 3px 0 2px; font-size: 23px; color: var(--invoice-ink); letter-spacing: -.02em; }
+.invoice-kicker { color: var(--p800); font-size: 9px; font-weight: 800; letter-spacing: .16em; }
 .invoice-subtitle, .invoice-title span, .invoice-student span, .invoice-meta span { color: var(--invoice-muted); font-size: 11px; }
-.invoice-title { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
-.invoice-title strong { font-size: 16px; }
-.invoice-meta { padding: 12px 0; border-top: 1px solid var(--invoice-line); border-bottom: 1px solid var(--invoice-line); }
+.invoice-title { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; text-align: right; }
+.invoice-title strong { font-size: 17px; }
+.invoice-status { padding: 4px 10px; border: 1px solid #b7e1c5; border-radius: 999px; background: #edf9f0; color: #19733b; font-size: 9px; font-style: normal; font-weight: 800; letter-spacing: .1em; }
+.invoice-meta { padding: 13px 0; border-top: 1px solid var(--invoice-line); border-bottom: 1px solid var(--invoice-line); }
 .invoice-meta div, .invoice-student div { display: flex; flex-direction: column; gap: 4px; }
-.invoice-student { align-items: flex-start; padding: 18px 0; }
-.invoice-table { overflow: hidden; border: 1px solid var(--invoice-line); border-radius: 7px; }
-.invoice-table-head { padding: 9px 12px; background: #f2f6fa; color: var(--invoice-muted); font-size: 11px; font-weight: 700; }
-.invoice-table-row, .invoice-total { padding: 14px 12px; }
+.invoice-student { align-items: flex-start; padding: 20px 0; }
+.invoice-student > div:first-child { min-width: 40%; }
+.invoice-table { overflow: hidden; border: 1px solid var(--invoice-line); border-radius: 9px; }
+.invoice-table-head { padding: 10px 14px; background: #eef4f8; color: var(--invoice-muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.invoice-table-row, .invoice-total { padding: 15px 14px; }
 .invoice-table-row { border-bottom: 1px solid var(--invoice-line); }
 .invoice-total { background: #f8fafc; font-size: 13px; }
-.invoice-total strong { color: var(--p800); font-size: 18px; }
-.invoice-details, .invoice-balance { padding: 13px 0; font-size: 12px; }
+.invoice-total strong { color: var(--p800); font-size: 20px; }
+.invoice-details, .invoice-balance { padding: 14px 0; font-size: 12px; }
+.invoice-details { flex-wrap: wrap; }
 .invoice-balance { border-top: 1px dashed var(--invoice-line); }
-.invoice-footer { align-items: flex-end; margin-top: 22px; padding-top: 15px; border-top: 1px solid var(--invoice-line); }
+.invoice-footer { align-items: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--invoice-line); }
 .invoice-signature { min-width: 130px; padding-top: 15px; border-top: 1px solid var(--invoice-ink); text-align: center; }
 .invoice-signature span, .invoice-signature small { display: block; }
 .invoice-signature small { color: var(--invoice-muted); font-size: 10px; }
+@media (max-width: 640px) {
+  .invoice-sheet { padding: 20px 16px; border-radius: 8px; }
+  .invoice-header, .invoice-student, .invoice-details, .invoice-footer { flex-direction: column; align-items: stretch; }
+  .invoice-title { align-items: flex-start; text-align: left; }
+  .invoice-meta { align-items: flex-start; }
+  .invoice-student > div:first-child { min-width: 0; }
+  .invoice-footer { gap: 24px; }
+  .invoice-signature { align-self: flex-end; }
+}
 @media print {
   body.printing-receipt * { visibility: hidden; }
   body.printing-receipt .receipt-sheet, body.printing-receipt .receipt-sheet * { visibility: visible; }

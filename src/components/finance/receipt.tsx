@@ -109,26 +109,30 @@ export function ReceiptView({ data }: { data: ReceiptData }) {
   return (
     <article className="receipt invoice-sheet receipt-sheet" aria-label={isSalary ? "বেতন ইনভয়েস" : "পেমেন্ট ইনভয়েস"}>
       <header className="invoice-header">
-        <div>
-          <div className="invoice-kicker">OFFICIAL PAYMENT RECEIPT</div>
-          <h3>{school.nameBn || "বিদ্যালয়"}</h3>
-          {school.nameEn && <div className="invoice-subtitle">{school.nameEn}</div>}
-          {(school.address || school.eiin) && (
-            <div className="small muted">
-              {school.address ?? ""}
-              {school.address && school.eiin ? " · " : ""}
-              {school.eiin ? `EIIN: ${bn(school.eiin)}` : ""}
-            </div>
-          )}
+        <div className="invoice-brand">
+          <div className="invoice-mark" aria-hidden="true">{(school.nameBn || "বি").slice(0, 1)}</div>
+          <div>
+            <div className="invoice-kicker">OFFICIAL PAYMENT DOCUMENT</div>
+            <h3>{school.nameBn || "বিদ্যালয়"}</h3>
+            {school.nameEn && <div className="invoice-subtitle">{school.nameEn}</div>}
+            {(school.address || school.eiin) && (
+              <div className="small muted">
+                {school.address ?? ""}
+                {school.address && school.eiin ? " · " : ""}
+                {school.eiin ? `EIIN: ${bn(school.eiin)}` : ""}
+              </div>
+            )}
+          </div>
         </div>
         <div className="invoice-title">
-          <strong>{isSalary ? "বেতন পরিশোধ ইনভয়েস" : "টাকা গ্রহণের রশিদ"}</strong>
+          <strong>{isSalary ? "বেতন পরিশোধ ইনভয়েস" : "পেমেন্ট ইনভয়েস"}</strong>
           <span>মূল কপি</span>
+          <em className="invoice-status">{data.status || "PAID"}</em>
         </div>
       </header>
       <div className="invoice-meta">
-        <div><span>রশিদ নং</span><b className="num">{bn(data.receiptNumber)}</b></div>
-        <div><span>তারিখ</span><b className="num">{data.paidAt ? bn(String(data.paidAt).slice(0, 10)) : "—"}</b></div>
+        <div><span>ইনভয়েস নং</span><b className="num">{bn(data.receiptNumber)}</b></div>
+        <div><span>ইস্যু তারিখ</span><b className="num">{data.paidAt ? bn(String(data.paidAt).slice(0, 10)) : "—"}</b></div>
       </div>
       <section className="invoice-student" aria-label={isSalary ? "কর্মচারীর তথ্য" : "শিক্ষার্থীর তথ্য"}>
         <div><span>{isSalary ? "শিক্ষকের নাম" : "শিক্ষার্থীর নাম"}</span><b>{data.studentNameBn}</b></div>
