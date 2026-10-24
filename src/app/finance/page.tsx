@@ -12,7 +12,7 @@ import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton, StatSkeleton } from "@/components/ui/list-skeleton";
 import { useToast } from "@/components/ui/toast";
 import { apiDelete } from "@/lib/admin-api";
-import { formatTaka } from "@/lib/format";
+import { formatTaka, paisaToTaka, takaToPaisa } from "@/lib/format";
 import {
   printReceiptSheet,
   ReceiptView,
@@ -42,7 +42,7 @@ export default function FinancePage() {
   });
   const [payment, setPayment] = useState({
     id: "",
-    amount: "",
+    amountTaka: "",
     method: "ক্যাশ",
   });
   const [payRow, setPayRow] = useState<Row | null>(null);
@@ -122,7 +122,7 @@ export default function FinancePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        lateFee: Number(form.lateFee || 0),
+        lateFee: takaToPaisa(Number(form.lateFee || 0)),
         classes,
       }),
     });
@@ -153,7 +153,7 @@ export default function FinancePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Number(payment.amount),
+          amount: takaToPaisa(Number(payment.amountTaka)),
           method: payment.method,
           paidAt,
         }),
@@ -191,13 +191,13 @@ export default function FinancePage() {
           eventNameBn: payRow?.eventNameBn
             ? String(payRow.eventNameBn)
             : "ফি ইভেন্ট",
-          amount: Number(payment.amount),
+          amount: takaToPaisa(Number(payment.amountTaka)),
           method: payment.method,
           remaining: payload?.data?.remaining,
           receivedBy: meName || undefined,
         });
       }
-      setPayment({ id: "", amount: "", method: "ক্যাশ" });
+      setPayment({ id: "", amountTaka: "", method: "ক্যাশ" });
       setPayRow(null);
       await loadDues();
     }
@@ -290,7 +290,7 @@ export default function FinancePage() {
                 />
                 <Input className="inp"
                   type="number"
-                  placeholder="দেরি ফি (পয়সা)"
+                  placeholder="দেরি ফি (টাকা)"
                   value={form.lateFee}
                   onChange={(e) =>
                     setForm({ ...form, lateFee: e.target.value })
@@ -418,7 +418,10 @@ export default function FinancePage() {
                     <tbody>
                       {(dues ?? []).map((row) => (
                         <tr key={row.id}>
-                          <td>{String(row.studentId)}</td>
+                          <td>
+                            <b>{String(row.studentNameBn ?? "শিক্ষার্থী")}</b>
+                            <small className="block">রেজি: {String(row.registrationNumber ?? "—")}</small>
+                          </td>
                           <td>{formatTaka(Number(row.amount))}</td>
                           <td>
                             {formatTaka(
@@ -448,8 +451,10 @@ export default function FinancePage() {
                                 setLastReceipt(null);
                                 setPayment({
                                   id: row.id,
-                                  amount: String(
-                                    Number(row.amount) - Number(row.paidAmount),
+                                  amountTaka: String(
+                                    paisaToTaka(
+                                      Number(row.amount) - Number(row.paidAmount),
+                                    ),
                                   ),
                                   method: "ক্যাশ",
                                 });
@@ -480,11 +485,11 @@ export default function FinancePage() {
                 <CardContent className="finance-form">
                   <Input className="inp"
                     type="number"
-                    value={payment.amount}
+                    value={payment.amountTaka}
                     onChange={(e) =>
-                      setPayment({ ...payment, amount: e.target.value })
+                      setPayment({ ...payment, amountTaka: e.target.value })
                     }
-                    placeholder="পরিমাণ (পয়সা)"
+                    placeholder="পরিমাণ (টাকা)"
                   />
                   <Select className="sel"
                     value={payment.method}

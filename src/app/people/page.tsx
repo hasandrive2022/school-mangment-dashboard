@@ -421,7 +421,7 @@ export default function PeoplePage() {
       });
       // Refresh the fee statement behind the modal so totals, statuses
       // and the payment history already include this payment on close.
-      void loadStatement(profile.id);
+      await loadStatement(profile.id);
     } catch (error) {
       setPayError(
         error instanceof Error ? error.message : "পেমেন্ট করা যায়নি",

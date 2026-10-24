@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { apiDelete } from "@/lib/admin-api";
-import { formatTaka } from "@/lib/format";
+import { formatTaka, takaToPaisa } from "@/lib/format";
 import { printReceiptSheet, ReceiptView, type ReceiptData, type ReceiptSchool } from "@/components/finance/receipt";
 type Salary = {
   id: string;
@@ -54,9 +54,9 @@ export default function SalaryPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        basic: Number(form.basic),
-        allowances: Number(form.allowances),
-        deductions: Number(form.deductions),
+        basic: takaToPaisa(Number(form.basic)),
+        allowances: takaToPaisa(Number(form.allowances)),
+        deductions: takaToPaisa(Number(form.deductions)),
       }),
     });
     setMessage(
@@ -93,19 +93,19 @@ export default function SalaryPage() {
             />
             <Input className="inp"
               type="number"
-              placeholder="মূল বেতন (পয়সা)"
+              placeholder="মূল বেতন (টাকা)"
               value={form.basic}
               onChange={(e) => setForm({ ...form, basic: e.target.value })}
             />
             <Input className="inp"
               type="number"
-              placeholder="ভাতা"
+              placeholder="ভাতা (টাকা)"
               value={form.allowances}
               onChange={(e) => setForm({ ...form, allowances: e.target.value })}
             />
             <Input className="inp"
               type="number"
-              placeholder="কর্তন"
+              placeholder="কর্তন (টাকা)"
               value={form.deductions}
               onChange={(e) => setForm({ ...form, deductions: e.target.value })}
             />
