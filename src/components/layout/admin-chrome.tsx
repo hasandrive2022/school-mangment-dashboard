@@ -40,6 +40,7 @@ const adminGroups = [
       ["ফি ও সংগ্রহ", "/dashboard/finance", CreditCard],
       ["বেতন", "/dashboard/salary", ClipboardList],
       ["আয়–ব্যয়", "/dashboard/ledger", FileText],
+      ["রিপোর্ট", "/dashboard/reports", FileText],
       ["ভর্তি আবেদন", "/dashboard/admissions", ClipboardList],
     ],
   },
@@ -50,16 +51,6 @@ const adminGroups = [
       ["বিদ্যালয়ের সেটিংস", "/dashboard/settings", Settings],
     ],
   },
-  {
-    title: "অতিরিক্ত ব্যবস্থাপনা",
-    items: [
-      ["বিজ্ঞপ্তি", "/dashboard/admin/notices", FileText],
-      ["পরীক্ষা ও মূল্যায়ন", "/dashboard/admin/exams", GraduationCap],
-      ["ফি ইভেন্ট", "/dashboard/admin/fee-events", CreditCard],
-      ["ফি সংগ্রহ", "/dashboard/admin/collection", WalletCards],
-      ["ইনবক্স", "/dashboard/admin/inbox", Users],
-    ],
-  },
 ] as const;
 const teacherGroups = [
   { title: "ওভারভিউ", items: [["ড্যাশবোর্ড", "/dashboard", LayoutDashboard]] },
@@ -68,13 +59,15 @@ const teacherGroups = [
     items: [
       ["উপস্থিতি গ্রহণ", "/dashboard/attendance", CalendarDays],
       ["নম্বর এন্ট্রি", "/dashboard/marks-entry", GraduationCap],
-      ["আমার বেতন", "/dashboard/admin/t-salary", WalletCards],
-      ["আমার প্রোফাইল", "/dashboard/admin/t-profile", Users],
+      ["আমার বেতন", "/dashboard/my-salary", WalletCards],
+      ["আমার প্রোফাইল", "/dashboard/my-profile", Users],
     ],
   },
 ] as const;
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/people/students", "শিক্ষার্থী"],
+  ["/people/students", "শিক্ষার্থী"],
   ["/dashboard/people", "শিক্ষার্থী ও শিক্ষক"],
   ["/people", "শিক্ষার্থী ও শিক্ষক"],
   ["/dashboard/academics", "একাডেমিক কাঠামো"],
@@ -97,21 +90,17 @@ const pageTitles: Array<[string, string]> = [
   ["/ledger", "আয়–ব্যয়"],
   ["/dashboard/admissions", "ভর্তি আবেদন"],
   ["/admissions", "ভর্তি আবেদন"],
+  ["/dashboard/reports", "রিপোর্ট"],
+  ["/reports", "রিপোর্ট"],
+  ["/dashboard/my-salary", "আমার বেতন"],
+  ["/my-salary", "আমার বেতন"],
+  ["/dashboard/my-profile", "আমার প্রোফাইল ও রুটিন"],
+  ["/my-profile", "আমার প্রোফাইল ও রুটিন"],
   ["/dashboard/content", "ওয়েবসাইট কনটেন্ট"],
   ["/content", "ওয়েবসাইট কনটেন্ট"],
   ["/dashboard/settings", "বিদ্যালয়ের সেটিংস"],
   ["/settings", "বিদ্যালয়ের সেটিংস"],
   ["/demo-reset", "ডেমো ডেটা রিসেট"],
-  ["/dashboard/admin/notices", "বিজ্ঞপ্তি ব্যবস্থাপনা"],
-  ["/dashboard/admin/exams", "পরীক্ষা ও মূল্যায়ন"],
-  ["/dashboard/admin/fee-events", "ফি ইভেন্ট"],
-  ["/dashboard/admin/collection", "ফি সংগ্রহ"],
-  ["/dashboard/admin/salary", "শিক্ষক বেতন"],
-  ["/dashboard/admin/ledger", "আয়–ব্যয় হিসাব"],
-  ["/dashboard/admin/admissions", "ভর্তি আবেদন"],
-  ["/dashboard/admin/inbox", "ইনবক্স"],
-  ["/dashboard/admin/t-salary", "আমার বেতন"],
-  ["/dashboard/admin/t-profile", "আমার প্রোফাইল"],
 ];
 
 function titleFor(pathname: string) {

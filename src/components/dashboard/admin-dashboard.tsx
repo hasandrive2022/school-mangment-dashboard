@@ -15,8 +15,10 @@ import {
   User,
   Users,
   Wallet,
+  WalletCards,
 } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { bn, bnNum, takaLabel } from "@/lib/format";
 
 type Props = {
   id: string;
@@ -25,7 +27,27 @@ type Props = {
   role: "ADMIN" | "TEACHER";
 };
 
-export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
+type RoutineRow = {
+  id: string;
+  dayOfWeek: number;
+  period: number;
+  room?: string | null;
+  subjectNameBn?: string;
+  classNameBn?: string;
+  sectionNameBn?: string;
+};
+
+type AssignmentRow = {
+  id: string;
+  subjectId?: string;
+  subjectNameBn?: string;
+  classId?: string;
+  classNameBn?: string;
+  sectionId?: string | null;
+  sectionNameBn?: string;
+};
+
+export function AdminDashboard({ displayNameBn, role }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [studentCount, setStudentCount] = useState<number | null>(null);
   const [teacherCount, setTeacherCount] = useState<number | null>(null);
@@ -34,19 +56,56 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
   const [ledgerBalance, setLedgerBalance] = useState<number | null>(null);
   const [feeSummary, setFeeSummary] = useState({ paid: 0, partial: 0, due: 0 });
   const [statsError, setStatsError] = useState(false);
+  const [todayClasses, setTodayClasses] = useState<RoutineRow[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+
   useEffect(() => {
     if (role !== "ADMIN") {
-      void fetch("/api/school-settings", { cache: "no-store" })
-        .then(
-          (response) =>
-            response.json() as Promise<{
+      void (async () => {
+        try {
+          const [schoolRes, noticesRes, routineRes, assignmentsRes] =
+            await Promise.all([
+              fetch("/api/school-settings", { cache: "no-store" }),
+              fetch("/api/content/notices", { cache: "no-store" }),
+              fetch("/api/backend/teacher/portal/routine", {
+                cache: "no-store",
+              }),
+              fetch("/api/backend/teacher/portal/assignments", {
+                cache: "no-store",
+              }),
+            ]);
+          if (schoolRes.ok) {
+            const schoolPayload = (await schoolRes.json()) as {
               data?: { school?: { nameBn?: string } };
-            }>,
-        )
-        .then((payload) =>
-          setSchoolName(payload.data?.school?.nameBn ?? "বিদ্যালয়"),
-        )
-        .catch(() => setStatsError(true));
+            };
+            setSchoolName(schoolPayload.data?.school?.nameBn ?? "বিদ্যালয়");
+          }
+          if (noticesRes.ok) {
+            const noticesPayload = (await noticesRes.json()) as {
+              data?: Array<{ titleBn?: string }>;
+            };
+            setRecentNotice(noticesPayload.data?.[0]?.titleBn ?? null);
+          }
+          if (routineRes.ok) {
+            const routinePayload = (await routineRes.json()) as {
+              data?: RoutineRow[];
+            };
+            const today = new Date().getDay();
+            const rows = (routinePayload.data ?? [])
+              .filter((row) => Number(row.dayOfWeek) === today)
+              .sort((a, b) => Number(a.period) - Number(b.period));
+            setTodayClasses(rows);
+          }
+          if (assignmentsRes.ok) {
+            const assignmentsPayload = (await assignmentsRes.json()) as {
+              data?: AssignmentRow[];
+            };
+            setAssignments(assignmentsPayload.data ?? []);
+          }
+        } catch {
+          setStatsError(true);
+        }
+      })();
       return;
     }
     void Promise.all([
@@ -112,6 +171,7 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
       )
       .catch(() => setStatsError(true));
   }, [role]);
+
   const groups =
     role === "ADMIN"
       ? [
@@ -137,6 +197,11 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                 label: "একাডেমিক কাঠামো",
                 href: "/dashboard/academics",
                 icon: BookOpen,
+              },
+              {
+                label: "ক্লাস রুটিন",
+                href: "/dashboard/routine",
+                icon: CalendarDays,
               },
               {
                 label: "উপস্থিতি রিপোর্ট",
@@ -166,6 +231,11 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
               {
                 label: "আয়–ব্যয়",
                 href: "/dashboard/ledger",
+                icon: FileText,
+              },
+              {
+                label: "রিপোর্ট",
+                href: "/dashboard/reports",
                 icon: FileText,
               },
               {
@@ -215,10 +285,28 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                 href: "/dashboard/marks-entry",
                 icon: GraduationCap,
               },
+              {
+                label: "আমার বেতন",
+                href: "/dashboard/my-salary",
+                icon: WalletCards,
+              },
+              {
+                label: "আমার প্রোফাইল",
+                href: "/dashboard/my-profile",
+                icon: Users,
+              },
             ],
           },
         ];
   const feeTotal = feeSummary.paid + feeSummary.partial + feeSummary.due;
+  const uniqueAssignments = Array.from(
+    new Map(
+      assignments.map((row) => [
+        `${row.classId ?? row.classNameBn ?? ""}|${row.sectionId ?? row.sectionNameBn ?? ""}|${row.subjectId ?? row.subjectNameBn ?? ""}`,
+        row,
+      ]),
+    ).values(),
+  );
   return (
     <div className="app full">
       <aside className={`side${sidebarOpen ? " open" : ""}`}>
@@ -294,7 +382,7 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                       ? "লোড হয়নি"
                       : studentCount === null
                         ? "লোড হচ্ছে…"
-                        : String(studentCount)
+                        : bnNum(studentCount)
                   }
                   icon={Users}
                 />
@@ -305,7 +393,7 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                       ? "লোড হয়নি"
                       : teacherCount === null
                         ? "লোড হচ্ছে…"
-                        : String(teacherCount)
+                        : bnNum(teacherCount)
                   }
                   icon={User}
                 />
@@ -326,7 +414,9 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                 <Stat
                   label="বর্তমান ব্যালেন্স"
                   value={
-                    ledgerBalance === null ? "লোড হচ্ছে…" : `৳ ${ledgerBalance}`
+                    ledgerBalance === null
+                      ? "লোড হচ্ছে…"
+                      : takaLabel(ledgerBalance)
                   }
                   icon={Wallet}
                 />
@@ -391,7 +481,7 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                       </div>
                       <div className="small muted">ফি সংগ্রহ বাকি আছে</div>
                     </div>
-                    <strong className="num">{feeSummary.due}</strong>
+                    <strong className="num">{bn(feeSummary.due)}</strong>
                   </div>
                   <div className="listrow">
                     <span className="av g">
@@ -404,27 +494,35 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                       <div className="small muted">লেজার ব্যালেন্স</div>
                     </div>
                     <strong className="num">
-                      {ledgerBalance === null ? "—" : `৳ ${ledgerBalance}`}
+                      {ledgerBalance === null ? "—" : takaLabel(ledgerBalance)}
                     </strong>
                   </div>
                 </div>
               </div>
               <div className="card">
                 <div className="chead">
-                  <h3 className="ct">অ্যাকাউন্ট তথ্য</h3>
-                </div>
-                <div className="listrow">
-                  <div className="grow muted">ইউজার আইডি</div>
-                  <b className="num">{id}</b>
-                </div>
-                <div className="listrow">
-                  <div className="grow muted">প্রতিষ্ঠান আইডি</div>
-                  <b className="num">{schoolId}</b>
+                  <h3 className="ct">প্রতিষ্ঠানের তথ্য</h3>
                 </div>
                 <div className="listrow">
                   <div className="grow muted">প্রতিষ্ঠান</div>
                   <b>{schoolName}</b>
                 </div>
+                <div className="listrow">
+                  <div className="grow muted">ভূমিকা</div>
+                  <b>প্রশাসক</b>
+                </div>
+                {studentCount !== null && (
+                  <div className="listrow">
+                    <div className="grow muted">মোট শিক্ষার্থী</div>
+                    <b className="num">{bnNum(studentCount)}</b>
+                  </div>
+                )}
+                {teacherCount !== null && (
+                  <div className="listrow">
+                    <div className="grow muted">মোট শিক্ষক</div>
+                    <b className="num">{bnNum(teacherCount)}</b>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -477,6 +575,38 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                       খুলুন
                     </Link>
                   </div>
+                  <div className="listrow">
+                    <span className="av">
+                      <WalletCards className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        আমার বেতন
+                      </div>
+                      <div className="small muted">
+                        মাসিক বেতনের বিবরণ দেখুন
+                      </div>
+                    </div>
+                    <Link className="btn gho sm" href="/dashboard/my-salary">
+                      খুলুন
+                    </Link>
+                  </div>
+                  <div className="listrow">
+                    <span className="av">
+                      <Users className="ic sm" />
+                    </span>
+                    <div className="grow">
+                      <div className="b" style={{ fontSize: 14.5 }}>
+                        আমার প্রোফাইল
+                      </div>
+                      <div className="small muted">
+                        প্রোফাইল ও ক্লাস রুটিন দেখুন
+                      </div>
+                    </div>
+                    <Link className="btn gho sm" href="/dashboard/my-profile">
+                      খুলুন
+                    </Link>
+                  </div>
                 </div>
                 <div className="card">
                   <div className="chead">
@@ -496,16 +626,76 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
                     </div>
                   </div>
                   <div className="chead" style={{ marginTop: 14 }}>
-                    <h3 className="ct">অ্যাকাউন্ট তথ্য</h3>
-                  </div>
-                  <div className="listrow">
-                    <div className="grow muted">ইউজার আইডি</div>
-                    <b className="num">{id}</b>
+                    <h3 className="ct">প্রতিষ্ঠানের তথ্য</h3>
                   </div>
                   <div className="listrow">
                     <div className="grow muted">প্রতিষ্ঠান</div>
                     <b>{schoolName}</b>
                   </div>
+                  <div className="listrow">
+                    <div className="grow muted">ভূমিকা</div>
+                    <b>শিক্ষক</b>
+                  </div>
+                </div>
+              </div>
+              <div className="g2">
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">আজকের ক্লাস</h3>
+                    <span className="sp" />
+                    <Link className="btn gho sm" href="/dashboard/my-profile">
+                      পুরো রুটিন
+                    </Link>
+                  </div>
+                  {todayClasses.length === 0 ? (
+                    <p className="admin-empty">আজ কোনো ক্লাস নেই।</p>
+                  ) : (
+                    todayClasses.map((row) => (
+                      <div className="listrow" key={row.id}>
+                        <span className="av">{bn(row.period)}</span>
+                        <div className="grow">
+                          <div className="b" style={{ fontSize: 14.5 }}>
+                            {row.subjectNameBn ?? "বিষয়"}
+                          </div>
+                          <div className="small muted">
+                            {[row.classNameBn, row.sectionNameBn]
+                              .filter(Boolean)
+                              .join(" · ")}
+                            {row.room ? ` · কক্ষ ${row.room}` : ""}
+                          </div>
+                        </div>
+                        <span className="chip b">
+                          পিরিয়ড {bn(row.period)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="card">
+                  <div className="chead">
+                    <h3 className="ct">আমার বরাদ্দকৃত ক্লাস</h3>
+                  </div>
+                  {uniqueAssignments.length === 0 ? (
+                    <p className="admin-empty">কোনো বরাদ্দ নেই।</p>
+                  ) : (
+                    uniqueAssignments.map((row) => (
+                      <div className="listrow" key={row.id}>
+                        <span className="av">
+                          <BookOpen className="ic sm" />
+                        </span>
+                        <div className="grow">
+                          <div className="b" style={{ fontSize: 14.5 }}>
+                            {row.subjectNameBn ?? "বিষয়"}
+                          </div>
+                          <div className="small muted">
+                            {[row.classNameBn, row.sectionNameBn]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </>
@@ -556,7 +746,7 @@ function Bar({
         <div className="rowflex" style={{ justifyContent: "space-between" }}>
           <span style={{ fontSize: 14.5 }}>{label}</span>
           <b className="num">
-            {value} · {pct}%
+            {bn(value)} জন · {bn(pct)}%
           </b>
         </div>
         <div className="bar" style={{ marginTop: 6 }}>

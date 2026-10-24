@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { bn } from "@/lib/format";
 type School = {
   nameBn: string;
   nameEn: string;
   eiin: string;
   foundedYear?: string;
   address: string;
+  phone?: string;
+  email?: string;
   logoUrl?: string;
   themeColor: string;
 };
@@ -27,10 +30,13 @@ export default function SettingsPage() {
     eiin: "",
     foundedYear: "",
     address: "",
+    phone: "",
+    email: "",
     logoUrl: "",
     themeColor: "#0F3151",
   });
   const [message, setMessage] = useState("");
+  const [logoFileName, setLogoFileName] = useState("");
   const { startUpload, isUploading } = useUploadThing("schoolBranding", {
     onClientUploadComplete: (files) =>
       setSchool((current) => ({ ...current, logoUrl: files[0]?.url ?? "" })),
@@ -38,8 +44,15 @@ export default function SettingsPage() {
   useEffect(() => {
     void fetch("/api/school-settings")
       .then((r) => r.json())
-      .then((p: { data?: School }) => {
-        if (p.data) setSchool(p.data);
+      .then((p: { data?: School | { school?: School } }) => {
+        if (!p.data) return;
+        // The settings endpoint returns { data: { school, settings } };
+        // older flat shapes are accepted too.
+        const loaded =
+          "school" in p.data && p.data.school
+            ? p.data.school
+            : (p.data as School);
+        setSchool((current) => ({ ...current, ...loaded }));
       });
   }, []);
   async function save(event: React.FormEvent) {
@@ -47,7 +60,17 @@ export default function SettingsPage() {
     const response = await fetch("/api/school-settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(school),
+      body: JSON.stringify({
+        nameBn: school.nameBn,
+        nameEn: school.nameEn,
+        eiin: school.eiin,
+        foundedYear: school.foundedYear || undefined,
+        address: school.address,
+        phone: school.phone || undefined,
+        email: school.email || undefined,
+        logoUrl: school.logoUrl || undefined,
+        themeColor: school.themeColor,
+      }),
     });
     setMessage(
       response.ok ? "সেটিংস সংরক্ষণ করা হয়েছে" : "সংরক্ষণ করা যায়নি",
@@ -106,23 +129,52 @@ export default function SettingsPage() {
                     }
                   />
                 </label>
-                <label>
-                  লোগো/সিল আপলোড
-                  <Input className="inp"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={isUploading}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void startUpload([file]);
+                <Field
+                  label="ফোন"
+                  type="tel"
+                  value={school.phone ?? ""}
+                  onChange={(value) => setSchool({ ...school, phone: value })}
+                />
+                <Field
+                  label="ইমেইল"
+                  type="email"
+                  value={school.email ?? ""}
+                  onChange={(value) => setSchool({ ...school, email: value })}
+                />
+                <div>
+                  <span className="lbl">লোগো/সিল আপলোড</span>
+                  <label
+                    className="upbox"
+                    style={{
+                      display: "block",
+                      cursor: isUploading ? "wait" : "pointer",
                     }}
-                  />
+                  >
+                    {isUploading
+                      ? "আপলোড হচ্ছে…"
+                      : logoFileName
+                        ? `নির্বাচিত ফাইল: ${logoFileName}`
+                        : "লোগো আপলোড করতে এখানে চাপুন"}
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={isUploading}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) {
+                          setLogoFileName(file.name);
+                          void startUpload([file]);
+                        }
+                      }}
+                    />
+                  </label>
                   {school.logoUrl && (
                     <small className="settings-success">
-                      UploadThing-এ সংরক্ষিত
+                      লোগো আপলোড সম্পন্ন — প্রিভিউতে দেখুন
                     </small>
                   )}
-                </label>
+                </div>
                 <Field
                   label="লোগো URL"
                   value={school.logoUrl ?? ""}
@@ -167,12 +219,14 @@ export default function SettingsPage() {
                         unoptimized
                       />
                     ) : (
-                      <span>আ</span>
+                      <span>{Array.from(school.nameBn || "আ")[0]}</span>
                     )}
                   </div>
                   <b>{school.nameBn || "বিদ্যালয়ের নাম"}</b>
-                  <small>{school.nameEn || "School name"}</small>
-                  <span>EIIN {school.eiin || "—"}</span>
+                  <small>{school.nameEn || "বিদ্যালয়ের ইংরেজি নাম"}</small>
+                  <span>EIIN {school.eiin ? bn(school.eiin) : "—"}</span>
+                  {school.phone && <small>ফোন: {bn(school.phone)}</small>}
+                  {school.email && <small>{school.email}</small>}
                 </div>
               </CardContent>
             </Card>
@@ -205,16 +259,19 @@ function Field({
   label,
   value,
   onChange,
+  type,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  type?: string;
 }) {
   return (
     <label>
       <span className="lbl">{label}</span>
       <Input
         className="inp"
+        type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
