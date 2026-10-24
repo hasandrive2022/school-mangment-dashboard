@@ -1142,6 +1142,29 @@ main.min-h-screen.bg-neutral-50 select {
     display: block;
   }
 }
+/* Round 9: receipt printing — while `body.printing-receipt` is set (see
+   printReceiptSheet), only the `.receipt-sheet` element is visible,
+   centered as a single A5/thermal-friendly slip. */
+@media print {
+  body.printing-receipt * {
+    visibility: hidden;
+  }
+  body.printing-receipt .receipt-sheet,
+  body.printing-receipt .receipt-sheet * {
+    visibility: visible;
+  }
+  body.printing-receipt .receipt-sheet {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 480px;
+    max-width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
 .rich-editor {
   overflow: hidden;
   border: 1px solid #e5e7eb;
@@ -1281,3 +1304,92 @@ main.min-h-screen.bg-neutral-50 select {
   font-size: 14px;
   font-weight: 600;
 }
+
+/* Round 6: toast notifications, confirm dialog, skeletons (design tokens) */
+.r6-toasts {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 36px));
+}
+.r6-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #0b2740;
+  color: #fff;
+  font-size: 14.5px;
+  line-height: 1.45;
+  box-shadow: 0 12px 32px rgba(11, 39, 64, 0.35);
+}
+.r6-toast.success { border-left: 4px solid #2e9e5b; }
+.r6-toast.error { border-left: 4px solid #e05252; background: #4a1212; }
+.r6-toast .ic { flex: none; margin-top: 1px; }
+.r6-toast span { flex: 1; }
+.r6-toast-close {
+  flex: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.8;
+}
+.r6-toast-close:hover { opacity: 1; }
+.r6-confirm-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgba(11, 39, 64, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.r6-confirm {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  padding: 22px;
+  box-shadow: 0 18px 48px rgba(11, 39, 64, 0.35);
+}
+.r6-confirm-head { display: flex; align-items: center; gap: 12px; }
+.r6-confirm-head h3 { font-size: 18px; font-weight: 700; color: #0b2740; margin: 0; }
+.r6-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fae3e3;
+  color: #c62828;
+  flex: none;
+}
+.r6-confirm-body { margin: 12px 0 0; font-size: 14.5px; color: #444; line-height: 1.55; }
+.r6-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.r6-delete-btn { color: #c62828; }
+.r6-skeleton-list { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; }
+.r6-skeleton-row { display: flex; align-items: center; gap: 12px; }
+.r6-skeleton-block {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #dcebf7 25%, #f2f7fc 50%, #dcebf7 75%);
+  background-size: 200% 100%;
+  animation: admin-loading-shimmer 1.4s infinite;
+}
+.r6-skeleton-avatar { width: 38px; height: 38px; border-radius: 50%; flex: none; }
+.r6-skeleton-line { height: 14px; width: 120px; }
+.r6-skeleton-line.wide { flex: 1; max-width: 340px; }
+.r6-skeleton-value { height: 26px; width: 72px; margin-bottom: 8px; }

@@ -1,177 +1,155 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 "use client";
-
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { bnDate, monthRange, takaLabel } from "@/lib/format";
+import { DeleteButton } from "@/components/ui/delete-button";
+import { ListSkeleton, StatSkeleton } from "@/components/ui/list-skeleton";
+import { useToast } from "@/components/ui/toast";
+import { apiDelete, apiGet } from "@/lib/admin-api";
+import { formatTaka } from "@/lib/format";
 
-type LedgerEntry = {
+type Entry = {
   id: string;
-  type: "INCOME" | "EXPENSE" | string;
+  type: string;
   amount: number;
   entryDate: string;
-  description: string;
+  description?: string;
   sourceType?: string | null;
-  sourceId?: string | null;
 };
-type LedgerPayload = {
-  data?: LedgerEntry[];
+type Report = {
+  data?: Entry[];
   totals?: { income: number; expense: number; balance: number };
 };
 
 export default function LedgerPage() {
-  const initial = monthRange();
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
-  const [totals, setTotals] = useState<{ income: number; expense: number; balance: number } | null>(null);
-  const [from, setFrom] = useState(initial.from);
-  const [to, setTo] = useState(initial.to);
-  const [loaded, setLoaded] = useState(false);
+  const toast = useToast();
+  const [report, setReport] = useState<Report | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
-  async function load(activeFrom = from, activeTo = to) {
-    const query = new URLSearchParams();
-    if (activeFrom) query.set("from", activeFrom);
-    if (activeTo) query.set("to", activeTo);
-    const qs = query.toString();
-    const response = await fetch(`/api/backend/finance/ledger${qs ? `?${qs}` : ""}`);
-    const payload = (await response.json()) as LedgerPayload;
-    const sorted = [...(payload.data ?? [])].sort((a, b) =>
-      b.entryDate.localeCompare(a.entryDate),
-    );
-    setEntries(sorted);
-    setTotals(payload.totals ?? { income: 0, expense: 0, balance: 0 });
-    setLoaded(true);
+  async function load() {
+    setLoading(true);
+    try {
+      const payload = await apiGet<Report>(
+        `/api/backend/finance/ledger?from=${from}&to=${to}`,
+      );
+      setReport(payload);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "রিপোর্ট লোড করা যায়নি");
+      setReport(null);
+    } finally {
+      setLoading(false);
+    }
   }
-
   useEffect(() => {
-    const range = monthRange();
-    setFrom(range.from);
-    setTo(range.to);
-    void load(range.from, range.to);
+    void load();
   }, []);
+
+  const entries = report?.data ?? [];
 
   return (
     <div className="dstack">
       <div className="chead">
         <div>
-          <h2 className="dpage-title">আয়–ব্যয় খাতা</h2>
-          <p className="cs">সময়সীমা অনুযায়ী মোট আয়, ব্যয় ও ব্যালেন্স — ফি আদায় ও বেতনের এন্ট্রি স্বয়ংক্রিয়ভাবে আসে।</p>
+          <h2 className="dpage-title">আয়–ব্যয় রিপোর্ট</h2>
+          <p className="cs">সময়সীমা অনুযায়ী মোট আয়, ব্যয় ও ব্যালেন্স।</p>
         </div>
       </div>
-
       <div className="card filterbar">
-        <div className="fld">
-          <label className="lbl">শুরুর তারিখ</label>
-          <Input
-            className="inp"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </div>
-        <div className="fld">
-          <label className="lbl">শেষ তারিখ</label>
-          <Input
-            className="inp"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </div>
-        <Button className="btn" onClick={() => void load()}>
-          রিপোর্ট দেখুন
-        </Button>
-        <Button
-          className="btn gho"
-          onClick={() => {
-            const range = monthRange();
-            setFrom(range.from);
-            setTo(range.to);
-            void load(range.from, range.to);
-          }}
-        >
-          এই মাস
-        </Button>
+        <Input className="inp"
+          type="date"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+        />
+        <Input className="inp"
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+        />
+        <Button className="btn" onClick={() => void load()}>রিপোর্ট</Button>
       </div>
-
-      {totals && (
+      {loading ? (
+        <div className="g3">
+          <StatSkeleton />
+          <StatSkeleton />
+          <StatSkeleton />
+        </div>
+      ) : report?.totals ? (
         <div className="g3">
           <div className="card stat">
             <div>
-              <div className="v num" style={{ color: "var(--green)" }}>
-                {takaLabel(totals.income)}
-              </div>
+              <div className="v num">{formatTaka(report.totals.income)}</div>
               <div className="l">মোট আয়</div>
             </div>
             <div className="ic-wrap g" />
           </div>
           <div className="card stat">
             <div>
-              <div className="v num" style={{ color: "var(--red)" }}>
-                {takaLabel(totals.expense)}
-              </div>
+              <div className="v num">{formatTaka(report.totals.expense)}</div>
               <div className="l">মোট ব্যয়</div>
             </div>
-            <div className="ic-wrap r" />
+            <div className="ic-wrap w" />
           </div>
           <div className="card stat">
             <div>
-              <div className="v num">{takaLabel(totals.balance)}</div>
-              <div className="l">ব্যালেন্স (আয় − ব্যয়)</div>
+              <div className="v num">{formatTaka(report.totals.balance)}</div>
+              <div className="l">ব্যালেন্স</div>
             </div>
             <div className="ic-wrap" />
           </div>
         </div>
-      )}
-
+      ) : null}
       <div className="card flush">
-        <div className="chead" style={{ padding: "16px 18px 0" }}>
-          <h3 className="ct">লেনদেনসমূহ</h3>
+        <div className="chead" style={{ padding: "18px 18px 14px", marginBottom: 0 }}>
+          <div>
+            <h3 className="ct">লেনদেনের তালিকা</h3>
+            <p className="cs">ফি সংগ্রহ ও বেতন পরিশোধ স্বয়ংক্রিয়ভাবে এখানে পোস্ট হয়</p>
+          </div>
         </div>
-        <div className="tw">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>তারিখ</th>
-                <th>বিবরণ</th>
-                <th>ধরন</th>
-                <th className="r">পরিমাণ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => {
-                const isIncome = entry.type === "INCOME";
-                return (
+        {loading ? (
+          <ListSkeleton rows={4} />
+        ) : entries.length === 0 ? (
+          <p className="admin-empty" style={{ margin: "0 18px 18px" }}>এই সময়সীমায় কোনো লেনদেন নেই।</p>
+        ) : (
+          <div className="tw">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>তারিখ</th>
+                  <th>বিবরণ</th>
+                  <th>ধরন</th>
+                  <th className="r">পরিমাণ</th>
+                  <th className="r">কার্যক্রম</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
                   <tr key={entry.id}>
-                    <td className="num">{bnDate(entry.entryDate)}</td>
+                    <td className="num">{entry.entryDate}</td>
                     <td>{entry.description || "—"}</td>
                     <td>
-                      {isIncome ? (
-                        <span className="chip g">আয়</span>
-                      ) : (
-                        <span className="chip r">ব্যয়</span>
-                      )}
+                      <span className={`chip ${entry.type === "INCOME" ? "g" : "r"}`}>
+                        {entry.type === "INCOME" ? "আয়" : "ব্যয়"}
+                      </span>
                     </td>
-                    <td
-                      className="r num b"
-                      style={{ color: isIncome ? "var(--green)" : "var(--red)" }}
-                    >
-                      {isIncome ? "+ " : "− "}
-                      {takaLabel(entry.amount)}
+                    <td className="r num">{formatTaka(entry.amount)}</td>
+                    <td className="r">
+                      <DeleteButton
+                        itemLabel={entry.description || "লেজার এন্ট্রি"}
+                        onDelete={() =>
+                          apiDelete(`/api/backend/finance/ledger/${entry.id}`).then(() => undefined)
+                        }
+                        onDeleted={load}
+                      />
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {loaded && !entries.length && (
-          <div className="admin-empty">এই সময়সীমায় কোনো লেনদেন নেই।</div>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-        <div className="hint" style={{ padding: "12px 18px 16px" }}>
-          ফি আদায় ও শিক্ষক বেতনের এন্ট্রি স্বয়ংক্রিয়ভাবে তৈরি হয় — সেগুলো এখান
-          থেকে বদলানো যায় না।
-        </div>
       </div>
     </div>
   );

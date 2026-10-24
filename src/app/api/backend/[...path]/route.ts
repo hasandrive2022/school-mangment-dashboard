@@ -44,3 +44,15 @@ export async function PATCH(
 ) {
   return forward(request, (await context.params).path);
 }
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> },
+) {
+  return forward(request, (await context.params).path);
+}
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> },
+) {
+  return forward(request, (await context.params).path);
+}

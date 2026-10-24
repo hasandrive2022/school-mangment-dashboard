@@ -1,6 +1,24 @@
-// Shared Bengali formatting helpers for the admin app.
+// Shared Bengali formatting helpers for the admin app — the ONE canonical
+// money-display path (Round 7, Fix 2).
+//
 // Backend money values are integer PAISA (100 paisa = ৳1). Users must only
-// ever see taka — convert at display/input time with these helpers.
+// ever see taka: every money value rendered in the UI goes through
+// `formatTaka` below, and any user-entered taka amount is converted back to
+// paisa with `takaToPaisa` at submit time. No component may render a raw
+// paisa number next to ৳, divide by 100 inline, or call toLocaleString for
+// money on its own.
+//
+// Format contract (identical to the Round-3 `takaLabel` output that the
+// live, correct-looking screens produced — do not change casually):
+//   formatTaka(0)       === "৳ ০"
+//   formatTaka(100)     === "৳ ১"        (100 paisa = ৳1)
+//   formatTaka(109000)  === "৳ ১,০৯০"
+//   formatTaka(2500000) === "৳ ২৫,০০০"
+//   formatTaka(150)     === "৳ ১.৫"      (poisha shown as a taka fraction)
+// Rules: "৳ " prefix (sign + one space); Bengali digits; en-IN grouping
+// (thousand/lakh style commas); poisha appears only when non-zero, as the
+// decimal fraction of the taka value with no trailing-zero padding
+// (150 paisa → "১.৫", 105 paisa → "১.০৫", whole taka → no fraction).
 
 const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
 
@@ -9,12 +27,12 @@ export function bn(value: number | string): string {
   return String(value).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)]);
 }
 
-/** Number with thousands separators, in Bengali digits. */
+/** Number with en-IN thousands separators, in Bengali digits. */
 export function bnNum(value: number): string {
   return bn(value.toLocaleString("en-IN"));
 }
 
-/** Paisa (backend) → taka number for display math. */
+/** Paisa (backend) → taka number for display math / input prefills. */
 export function paisaToTaka(paisa: number): number {
   return Math.round((paisa / 100) * 100) / 100;
 }
@@ -24,36 +42,35 @@ export function takaToPaisa(taka: number): number {
   return Math.round(taka * 100);
 }
 
-/** "৳ ১,২০০" style label from a paisa amount. */
-export function takaLabel(paisa: number): string {
+/**
+ * THE canonical money display: paisa (backend) → "৳ ১,০৯০" style label.
+ * Every ৳ amount rendered anywhere in the admin app uses this function.
+ */
+export function formatTaka(paisa: number): string {
   const taka = paisaToTaka(paisa);
   return `৳ ${bnNum(taka)}`;
 }
 
-/** ISO/date string → dd/mm/yyyy with Bengali digits. */
+export const takaLabel = formatTaka;
+
 export function bnDate(value?: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    // Plain YYYY-MM-DD strings: format without timezone shifting.
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-    if (match) return bn(`${match[3]}/${match[2]}/${match[1]}`);
-    return bn(value);
+    return match ? bn(`${match[3]}/${match[2]}/${match[1]}`) : bn(value);
   }
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  return bn(`${dd}/${mm}/${date.getFullYear()}`);
+  return bn(
+    `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`,
+  );
 }
 
-/** YYYY-MM-DD for <input type="date"> defaults (current month bounds). */
 export function monthRange(now = new Date()): { from: string; to: string } {
   const y = now.getFullYear();
   const m = now.getMonth();
-  const from = new Date(y, m, 1);
-  const to = new Date(y, m + 1, 0);
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  return { from: fmt(from), to: fmt(to) };
+  const format = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return { from: format(new Date(y, m, 1)), to: format(new Date(y, m + 1, 0)) };
 }
 
 export const WEEKDAYS_BN = [

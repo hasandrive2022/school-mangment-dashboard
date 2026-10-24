@@ -1,47 +1,32 @@
-import { Suspense } from "react";
-import { ScreenWorkspace } from "@/components/admin/screen-workspace";
+import { redirect } from "next/navigation";
+import { TeacherScreen } from "@/components/admin/teacher-screen";
 
-export default function AdminScreenPage({
-  params,
-}: {
-  params: Promise<{ screen: string }>;
-}) {
-  return (
-    <Suspense fallback={<ScreenWorkspaceFallback />}>
-      <AdminScreenContent params={params} />
-    </Suspense>
-  );
-}
+/**
+ * These legacy "/dashboard/admin/<screen>" links used to render a static
+ * mock workspace (hard-coded rows, dead buttons, fake counts). Each screen
+ * now routes to the real management page that owns that data; the two
+ * teacher screens are served by real teacher-portal data.
+ */
+const REDIRECTS: Record<string, string> = {
+  notices: "/dashboard/content?tab=notices",
+  exams: "/dashboard/results",
+  "fee-events": "/dashboard/finance",
+  collection: "/dashboard/finance",
+  salary: "/dashboard/salary",
+  ledger: "/dashboard/ledger",
+  admissions: "/dashboard/admissions",
+  inbox: "/dashboard/content?tab=complaints",
+  settings: "/dashboard/settings",
+};
 
-async function AdminScreenContent({
+export default async function AdminScreenPage({
   params,
 }: {
   params: Promise<{ screen: string }>;
 }) {
   const { screen } = await params;
-  return <ScreenWorkspace screen={screen} />;
-}
-
-function ScreenWorkspaceFallback() {
-  return (
-    <div className="dstack screen-workspace" aria-busy="true">
-      <section className="screen-hero screen-hero-skeleton">
-        <div className="screen-hero-copy">
-          <span className="screen-icon loading-block" />
-          <div>
-            <div className="loading-bar loading-eyebrow" />
-            <div className="loading-bar loading-heading" />
-            <div className="loading-bar loading-copy" />
-          </div>
-        </div>
-      </section>
-      <div className="g4 screen-stats">
-        <div className="card loading-card" />
-        <div className="card loading-card" />
-        <div className="card loading-card" />
-        <div className="card loading-card" />
-      </div>
-      <section className="card loading-table" />
-    </div>
-  );
+  if (screen === "t-salary" || screen === "t-profile") {
+    return <TeacherScreen screen={screen} />;
+  }
+  redirect(REDIRECTS[screen] ?? "/dashboard");
 }

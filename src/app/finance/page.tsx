@@ -2,264 +2,137 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { DeleteButton } from "@/components/ui/delete-button";
+import { ListSkeleton, StatSkeleton } from "@/components/ui/list-skeleton";
+import { useToast } from "@/components/ui/toast";
+import { apiDelete } from "@/lib/admin-api";
+import { formatTaka } from "@/lib/format";
 import {
-  bn,
-  bnDate,
-  bnNum,
-  paisaToTaka,
-  takaLabel,
-  takaToPaisa,
-} from "@/lib/format";
+  printReceiptSheet,
+  ReceiptView,
+  type ReceiptData,
+  type ReceiptSchool,
+} from "@/components/finance/receipt";
 
-type FeeEventClass = { classId: string; classNameBn?: string; amount: number };
-type FeeEvent = {
-  id: string;
-  nameBn: string;
-  type: string;
-  description?: string;
-  dueDate: string;
-  lateFee: number;
-  isPublished: boolean;
-  classes: FeeEventClass[];
-  duesCount: number;
-  paidCount: number;
-  partialCount: number;
+type Row = Record<string, unknown> & { id: string };
+const emptyEvent = {
+  nameBn: "",
+  type: "মাসিক বেতন",
+  dueDate: "",
+  lateFee: "",
+  classes: "",
+  description: "",
 };
-type Due = {
-  id: string;
-  studentId: string;
-  feeEventId: string;
-  amount: number;
-  paidAmount: number;
-  dueDate: string;
-  status: string;
-  studentNameBn?: string;
-  registrationNumber?: string;
-  classNameBn?: string;
-  sectionNameBn?: string;
-  eventNameBn?: string;
-};
-type ClassRow = { id: string; nameBn: string };
-type SectionRow = { id: string; classId: string; nameBn: string; classNameBn?: string };
-type ClassAmountRow = { classId: string; amountTaka: string };
-type ReceiptInfo = {
-  receiptNumber: string;
-  verifyCode: string;
-  paidAmount: number;
-  remaining: number;
-  amountTaka: number;
-  method: string;
-  paidAt: string;
-  studentNameBn?: string;
-  registrationNumber?: string;
-  eventNameBn?: string;
-  classNameBn?: string;
-  sectionNameBn?: string;
-};
-
-const TYPE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "monthly", label: "মাসিক বেতন" },
-  { value: "exam", label: "পরীক্ষা ফি" },
-  { value: "admission", label: "ভর্তি ফি" },
-  { value: "other", label: "অন্যান্য" },
-];
-const TYPE_LABELS: Record<string, string> = {
-  monthly: "মাসিক বেতন",
-  exam: "পরীক্ষা ফি",
-  admission: "ভর্তি ফি",
-  annual: "বার্ষিক ফি",
-  session: "সেশন চার্জ",
-  other: "অন্যান্য",
-};
-const METHODS = ["ক্যাশ", "ব্যাংক", "বিকাশ"];
-
-function statusChip(status: string) {
-  if (status === "PAID")
-    return <span className="chip g">পরিশোধিত</span>;
-  if (status === "PARTIAL")
-    return <span className="chip w">আংশিক</span>;
-  return <span className="chip r">বকেয়া</span>;
-}
 
 export default function FinancePage() {
-  const [view, setView] = useState<"list" | "form" | "collection">("list");
-  const [events, setEvents] = useState<FeeEvent[]>([]);
-  const [allDues, setAllDues] = useState<Due[]>([]);
-  const [dues, setDues] = useState<Due[]>([]);
-  const [classes, setClasses] = useState<ClassRow[]>([]);
-  const [sections, setSections] = useState<SectionRow[]>([]);
-  const [schoolName, setSchoolName] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-
-  // --- event form state ---
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    nameBn: "",
-    type: "monthly",
-    description: "",
-    dueDate: "",
-    lateFeeTaka: "",
-    isPublished: false,
+  const toast = useToast();
+  const [events, setEvents] = useState<Row[] | null>(null);
+  const [dues, setDues] = useState<Row[] | null>(null);
+  const [form, setForm] = useState(emptyEvent);
+  const [filters, setFilters] = useState({
+    classId: "",
+    sectionId: "",
+    status: "",
   });
-  const [classRows, setClassRows] = useState<ClassAmountRow[]>([
-    { classId: "", amountTaka: "" },
-  ]);
-
-  // --- collection filters ---
-  const [filters, setFilters] = useState({ classId: "", sectionId: "", status: "" });
-
-  // --- payment modal ---
-  const [payDue, setPayDue] = useState<Due | null>(null);
-  const [payForm, setPayForm] = useState({ amountTaka: "", method: "ক্যাশ", paidAt: "" });
-  const [receipt, setReceipt] = useState<ReceiptInfo | null>(null);
-  const [paying, setPaying] = useState(false);
+  const [payment, setPayment] = useState({
+    id: "",
+    amount: "",
+    method: "ক্যাশ",
+  });
+  const [payRow, setPayRow] = useState<Row | null>(null);
+  const [school, setSchool] = useState<ReceiptSchool | null>(null);
+  const [meName, setMeName] = useState("");
+  const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
+  const [message, setMessage] = useState("");
 
   async function loadEvents() {
     const payload = (await (
       await fetch("/api/backend/finance/fee-events")
-    ).json()) as { data?: FeeEvent[] };
+    ).json()) as { data?: Row[] };
     setEvents(payload.data ?? []);
   }
-  async function loadAllDues() {
-    const payload = (await (
-      await fetch("/api/backend/finance/dues")
-    ).json()) as { data?: Due[] };
-    setAllDues(payload.data ?? []);
-  }
-  async function loadDues(active = filters) {
+  async function loadDues() {
     const query = new URLSearchParams(
-      Object.entries(active).filter(([, value]) => value),
+      Object.entries(filters).filter(([, value]) => value),
     );
-    const qs = query.toString();
     const payload = (await (
-      await fetch(`/api/backend/finance/dues${qs ? `?${qs}` : ""}`)
-    ).json()) as { data?: Due[] };
+      await fetch(`/api/backend/finance/dues?${query}`)
+    ).json()) as { data?: Row[] };
     setDues(payload.data ?? []);
   }
-  async function loadLookups() {
-    const [classRes, sectionRes] = await Promise.all([
-      fetch("/api/backend/academics/classes"),
-      fetch("/api/backend/academics/sections"),
-    ]);
-    const classPayload = (await classRes.json()) as { data?: ClassRow[] };
-    const sectionPayload = (await sectionRes.json()) as { data?: SectionRow[] };
-    setClasses(classPayload.data ?? []);
-    setSections(sectionPayload.data ?? []);
+  async function publishEvent(id: string) {
+    const response = await fetch(
+      `/api/backend/finance/fee-events/${id}/publish`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      },
+    );
+    if (response.ok) {
+      toast.success("ফি ইভেন্ট প্রকাশিত হয়েছে — বকেয়া তৈরি হয়েছে");
+      await loadEvents();
+      await loadDues();
+    } else {
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string;
+        error?: string;
+      } | null;
+      toast.error(payload?.message ?? payload?.error ?? "প্রকাশ করা যায়নি");
+    }
   }
-
   useEffect(() => {
     void loadEvents();
-    void loadAllDues();
-    void loadDues({ classId: "", sectionId: "", status: "" });
-    void loadLookups();
+    void loadDues();
+  }, []);
+  // School identity + collector name for the receipt (Round 9 wiring).
+  useEffect(() => {
     void fetch("/api/school-settings")
-      .then((r) => r.json())
-      .then((p: { data?: { nameBn?: string } }) => {
-        if (p.data?.nameBn) setSchoolName(p.data.nameBn);
+      .then((response) => response.json())
+      .then((payload: { data?: { school?: ReceiptSchool } }) => {
+        if (payload.data?.school) setSchool(payload.data.school);
+      })
+      .catch(() => undefined);
+    void fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((payload: { user?: { displayNameBn?: string } }) => {
+        if (payload.user?.displayNameBn) setMeName(payload.user.displayNameBn);
       })
       .catch(() => undefined);
   }, []);
-
-  // ---------- event form ----------
-  function openCreate() {
-    setEditingId(null);
-    setForm({
-      nameBn: "",
-      type: "monthly",
-      description: "",
-      dueDate: "",
-      lateFeeTaka: "",
-      isPublished: false,
-    });
-    setClassRows([{ classId: "", amountTaka: "" }]);
-    setError("");
-    setView("form");
-  }
-  function openEdit(event: FeeEvent) {
-    setEditingId(event.id);
-    setForm({
-      nameBn: event.nameBn ?? "",
-      type: TYPE_LABELS[event.type] ? event.type : "other",
-      description: event.description ?? "",
-      dueDate: event.dueDate ?? "",
-      lateFeeTaka: event.lateFee ? String(paisaToTaka(event.lateFee)) : "",
-      isPublished: Boolean(event.isPublished),
-    });
-    setClassRows(
-      event.classes?.length
-        ? event.classes.map((row) => ({
-            classId: row.classId,
-            amountTaka: String(paisaToTaka(row.amount)),
-          }))
-        : [{ classId: "", amountTaka: "" }],
-    );
-    setError("");
-    setView("form");
-  }
   async function saveEvent() {
-    setError("");
-    const validRows = classRows.filter(
-      (row) => row.classId && Number(row.amountTaka) > 0,
-    );
-    if (!form.nameBn.trim()) {
-      setError("ইভেন্টের নাম দিন।");
+    let classes: Array<{ classId: string; amount: number }>;
+    try {
+      classes = JSON.parse(form.classes) as Array<{
+        classId: string;
+        amount: number;
+      }>;
+    } catch {
+      setMessage("classes JSON সঠিক নয়");
       return;
     }
-    if (!form.dueDate) {
-      setError("পরিশোধের শেষ তারিখ দিন।");
-      return;
-    }
-    if (!validRows.length) {
-      setError("অন্তত একটি শ্রেণি ও টাকার পরিমাণ দিন।");
-      return;
-    }
-    const body = {
-      nameBn: form.nameBn.trim(),
-      type: form.type,
-      description: form.description,
-      dueDate: form.dueDate,
-      lateFee: takaToPaisa(Number(form.lateFeeTaka || 0)),
-      isPublished: form.isPublished,
-      classes: validRows.map((row) => ({
-        classId: row.classId,
-        amount: takaToPaisa(Number(row.amountTaka)),
-      })),
-    };
-    const response = editingId
-      ? await fetch(`/api/backend/finance/fee-events/${editingId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        })
-      : await fetch("/api/backend/finance/fee-events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-    if (!response.ok) {
-      setError("ইভেন্ট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।");
-      return;
-    }
-    setMessage(editingId ? "ফি ইভেন্ট হালনাগাদ হয়েছে।" : "ফি ইভেন্ট তৈরি হয়েছে।");
-    setView("list");
-    await Promise.all([loadEvents(), loadAllDues(), loadDues()]);
-  }
-  async function publishEvent(id: string) {
-    const response = await fetch(`/api/backend/finance/fee-events/${id}/publish`, {
-      method: "PATCH",
+    const response = await fetch("/api/backend/finance/fee-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        lateFee: Number(form.lateFee || 0),
+        classes,
+      }),
     });
     setMessage(
-      response.ok
-        ? "ইভেন্ট প্রকাশিত হয়েছে — শিক্ষার্থীদের বকেয়া তৈরি হয়েছে।"
-        : "প্রকাশ করা যায়নি।",
+      response.ok ? "ফি ইভেন্ট তৈরি হয়েছে" : "ইভেন্ট তৈরি করা যায়নি",
     );
-    if (response.ok) await Promise.all([loadEvents(), loadAllDues(), loadDues()]);
+    if (response.ok) {
+      setForm(emptyEvent);
+      await loadEvents();
+    }
   }
   async function copyEvent(id: string) {
     const response = await fetch(`/api/backend/finance/fee-events/${id}/copy`, {
@@ -267,694 +140,394 @@ export default function FinancePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
-    setMessage(response.ok ? "ইভেন্ট কপি তৈরি হয়েছে।" : "কপি করা যায়নি।");
+    setMessage(
+      response.ok ? "পরবর্তী মাসের ইভেন্ট তৈরি হয়েছে" : "কপি করা যায়নি",
+    );
     if (response.ok) await loadEvents();
   }
-
-  // ---------- collection / payment ----------
-  function openPayment(due: Due) {
-    setReceipt(null);
-    setPayDue(due);
-    setPayForm({
-      amountTaka: String(paisaToTaka(due.amount - due.paidAmount)),
-      method: "ক্যাশ",
-      paidAt: new Date().toISOString().slice(0, 10),
-    });
-  }
-  async function submitPayment() {
-    if (!payDue) return;
-    const amountTaka = Number(payForm.amountTaka);
-    if (!amountTaka || amountTaka <= 0) {
-      setError("সঠিক টাকার পরিমাণ দিন।");
-      return;
-    }
-    setPaying(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/backend/finance/dues/${payDue.id}/pay`, {
+  async function pay() {
+    const paidAt = new Date().toISOString().slice(0, 10);
+    const response = await fetch(
+      `/api/backend/finance/dues/${payment.id}/pay`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: takaToPaisa(amountTaka),
-          method: payForm.method,
-          paidAt: payForm.paidAt || new Date().toISOString().slice(0, 10),
+          amount: Number(payment.amount),
+          method: payment.method,
+          paidAt,
         }),
-      });
+      },
+    );
+    setMessage(
+      response.ok ? "পেমেন্ট ও রসিদ তৈরি হয়েছে" : "পেমেন্ট করা যায়নি",
+    );
+    if (response.ok) {
       const payload = (await response.json().catch(() => null)) as {
         data?: {
-          receipt: { receiptNumber: string; verifyCode: string };
-          paidAmount: number;
-          remaining: number;
+          receipt?: { receiptNumber?: string; verifyCode?: string };
+          remaining?: number;
         };
       } | null;
-      if (!response.ok || !payload?.data) {
-        setError("পেমেন্ট করা যায়নি। আবার চেষ্টা করুন।");
-        return;
+      const receipt = payload?.data?.receipt;
+      if (receipt?.receiptNumber) {
+        setLastReceipt({
+          school,
+          receiptNumber: receipt.receiptNumber,
+          verifyCode: receipt.verifyCode,
+          paidAt,
+          studentNameBn: payRow?.studentNameBn
+            ? String(payRow.studentNameBn)
+            : "শিক্ষার্থী",
+          registrationNumber: payRow?.registrationNumber
+            ? String(payRow.registrationNumber)
+            : undefined,
+          classNameBn: payRow?.classNameBn
+            ? String(payRow.classNameBn)
+            : undefined,
+          sectionNameBn: payRow?.sectionNameBn
+            ? String(payRow.sectionNameBn)
+            : undefined,
+          eventNameBn: payRow?.eventNameBn
+            ? String(payRow.eventNameBn)
+            : "ফি ইভেন্ট",
+          amount: Number(payment.amount),
+          method: payment.method,
+          remaining: payload?.data?.remaining,
+          receivedBy: meName || undefined,
+        });
       }
-      setReceipt({
-        receiptNumber: payload.data.receipt.receiptNumber,
-        verifyCode: payload.data.receipt.verifyCode,
-        paidAmount: payload.data.paidAmount,
-        remaining: payload.data.remaining,
-        amountTaka,
-        method: payForm.method,
-        paidAt: payForm.paidAt,
-        studentNameBn: payDue.studentNameBn,
-        registrationNumber: payDue.registrationNumber,
-        eventNameBn: payDue.eventNameBn,
-        classNameBn: payDue.classNameBn,
-        sectionNameBn: payDue.sectionNameBn,
-      });
-      await Promise.all([loadEvents(), loadAllDues(), loadDues()]);
-    } finally {
-      setPaying(false);
+      setPayment({ id: "", amount: "", method: "ক্যাশ" });
+      setPayRow(null);
+      await loadDues();
     }
   }
-
-  const dueCount = allDues.filter((row) => row.status === "DUE").length;
-  const paidCountAll = allDues.filter((row) => row.status === "PAID").length;
-  const partialCountAll = allDues.filter((row) => row.status === "PARTIAL").length;
-  const filteredSections = sections.filter(
-    (row) => !filters.classId || row.classId === filters.classId,
-  );
-
   return (
     <div className="dstack">
-      <div className="chead">
-        <div>
-          <h2 className="dpage-title">ফি ব্যবস্থাপনা</h2>
-          <p className="cs">ফি ইভেন্ট তৈরি, প্রকাশ ও আদায় — সব হিসাব টাকায়।</p>
-        </div>
-        <span className="sp" />
-        <Button className="btn" onClick={openCreate}>
-          নতুন ইভেন্ট
-        </Button>
-      </div>
-
-      <div className="g4">
-        <div className="card stat">
+        <div className="admin-page-heading">
           <div>
-            <div className="v num">{bnNum(events.length)}</div>
-            <div className="l">মোট ইভেন্ট</div>
+            <p>হিসাব ও সংগ্রহ</p>
+            <h1>ফি ব্যবস্থাপনা</h1>
           </div>
-          <div className="ic-wrap" />
+          <Badge variant="success">লাইভ হিসাব</Badge>
         </div>
-        <div className="card stat">
-          <div>
-            <div className="v num">{bnNum(dueCount)}</div>
-            <div className="l">মোট বকেয়া</div>
+        {events === null || dues === null ? (
+          <div className="finance-summary">
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
           </div>
-          <div className="ic-wrap r" />
-        </div>
-        <div className="card stat">
-          <div>
-            <div className="v num">{bnNum(paidCountAll)}</div>
-            <div className="l">পরিশোধিত</div>
+        ) : (
+          <div className="finance-summary">
+            <div className="card stat">
+              <div>
+                <div className="v num">{events.length}</div>
+                <div className="l">মোট ইভেন্ট</div>
+              </div>
+            </div>
+            <div className="card stat">
+              <div>
+                <div className="v num">{dues.length}</div>
+                <div className="l">দেখানো বকেয়া</div>
+              </div>
+            </div>
+            <div className="card stat">
+              <div>
+                <div className="v num">
+                  {dues.filter((row) => row.status === "PAID").length}
+                </div>
+                <div className="l">পরিশোধিত</div>
+              </div>
+            </div>
+            <div className="card stat">
+              <div>
+                <div className="v num">
+                  {dues.filter((row) => row.status === "PARTIAL").length}
+                </div>
+                <div className="l">আংশিক</div>
+              </div>
+            </div>
           </div>
-          <div className="ic-wrap g" />
-        </div>
-        <div className="card stat">
-          <div>
-            <div className="v num">{bnNum(partialCountAll)}</div>
-            <div className="l">আংশিক</div>
-          </div>
-          <div className="ic-wrap w" />
-        </div>
-      </div>
-
-      <div className="tabs" role="tablist">
-        <button
-          type="button"
-          className={view === "list" ? "on" : ""}
-          onClick={() => setView("list")}
-        >
-          ইভেন্ট তালিকা
-        </button>
-        <button
-          type="button"
-          className={view === "form" ? "on" : ""}
-          onClick={() => (editingId || form.nameBn ? setView("form") : openCreate())}
-        >
-          ইভেন্ট তৈরি / সম্পাদনা
-        </button>
-        <button
-          type="button"
-          className={view === "collection" ? "on" : ""}
-          onClick={() => setView("collection")}
-        >
-          আদায় (কালেকশন)
-        </button>
-      </div>
-
-      {message && <p className="alert g">{message}</p>}
-      {error && view !== "collection" && <p className="alert r">{error}</p>}
-
-      {view === "list" && (
-        <div className="card flush">
-          <div className="chead" style={{ padding: "16px 18px 0" }}>
-            <h3 className="ct">ফি ইভেন্টসমূহ</h3>
-            <span className="sp" />
-            <Button className="btn sm" onClick={openCreate}>
-              নতুন ইভেন্ট
-            </Button>
-          </div>
-          <div className="tw">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>ইভেন্টের নাম</th>
-                  <th>ধরন</th>
-                  <th>শ্রেণিসমূহ</th>
-                  <th>শেষ তারিখ</th>
-                  <th style={{ minWidth: 150 }}>অগ্রগতি</th>
-                  <th>অবস্থা</th>
-                  <th className="r">কার্যকলাপ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((event) => {
-                  const total = event.duesCount ?? 0;
-                  const paid = event.paidCount ?? 0;
-                  const pct = total ? Math.round((paid * 100) / total) : 0;
-                  return (
-                    <tr key={event.id}>
-                      <td>
-                        <span className="b">{event.nameBn}</span>
-                        {event.lateFee ? (
-                          <div className="small muted">
-                            বিলম্ব ফি: {takaLabel(event.lateFee)}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td>{TYPE_LABELS[event.type] ?? event.type}</td>
-                      <td>
-                        {event.classes?.length
-                          ? event.classes.map((row) => (
-                              <div key={row.classId} className="small">
-                                {row.classNameBn ?? ""} — {takaLabel(row.amount)}
-                              </div>
-                            ))
-                          : "—"}
-                      </td>
-                      <td className="num">{bnDate(event.dueDate)}</td>
-                      <td>
-                        {total ? (
-                          <div className="rowflex">
-                            <div className="bar" style={{ flex: 1 }}>
-                              <i
-                                className={pct >= 80 ? "g" : pct >= 40 ? "" : "w"}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="small num">
-                              {bn(paid)}/{bn(total)} · {bn(pct)}%
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="small muted">প্রকাশের পর হিসাব শুরু হবে</span>
-                        )}
-                      </td>
-                      <td>
-                        {event.isPublished ? (
-                          <span className="chip g">প্রকাশিত</span>
-                        ) : (
-                          <span className="chip gr">খসড়া</span>
-                        )}
-                      </td>
-                      <td className="r">
-                        <span className="rowflex" style={{ justifyContent: "flex-end" }}>
-                          {!event.isPublished && (
+        )}
+        <div className="finance-layout">
+          <section>
+            <Card className="card">
+              <CardHeader>
+                <CardTitle>নতুন ফি ইভেন্ট</CardTitle>
+                <p>প্রতি শ্রেণির আলাদা amount JSON-এ দিন।</p>
+              </CardHeader>
+              <CardContent className="finance-form">
+                <Input className="inp"
+                  placeholder="ইভেন্টের নাম"
+                  value={form.nameBn}
+                  onChange={(e) => setForm({ ...form, nameBn: e.target.value })}
+                />
+                <Select className="sel"
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                >
+                  <option>মাসিক বেতন</option>
+                  <option>পরীক্ষা ফি</option>
+                  <option>ভর্তি ফি</option>
+                  <option>অন্যান্য</option>
+                </Select>
+                <div className="finance-wide">
+                  <label className="finance-label">ইভেন্টের বিবরণ</label>
+                  <RichTextEditor
+                    value={form.description}
+                    onChange={(description) =>
+                      setForm({ ...form, description })
+                    }
+                  />
+                </div>
+                <Input className="inp"
+                  type="date"
+                  value={form.dueDate}
+                  onChange={(e) =>
+                    setForm({ ...form, dueDate: e.target.value })
+                  }
+                />
+                <Input className="inp"
+                  type="number"
+                  placeholder="দেরি ফি (পয়সা)"
+                  value={form.lateFee}
+                  onChange={(e) =>
+                    setForm({ ...form, lateFee: e.target.value })
+                  }
+                />
+                <Input className="inp finance-wide"
+                  placeholder={'[{"classId":"...","amount":5000}]'}
+                  value={form.classes}
+                  onChange={(e) =>
+                    setForm({ ...form, classes: e.target.value })
+                  }
+                />
+                <Button className="btn" onClick={() => void saveEvent()}>
+                  ইভেন্ট সংরক্ষণ করুন
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="card">
+              <CardHeader>
+                <CardTitle>ইভেন্ট তালিকা</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="finance-events">
+                  {events === null ? (
+                    <ListSkeleton rows={3} />
+                  ) : events.length ? (
+                    events.map((event) => (
+                      <article key={event.id}>
+                        <div>
+                          <b>{String(event.nameBn)}</b>
+                          <small>শেষ তারিখ: {String(event.dueDate)}</small>
+                          <small>
+                            অবস্থা:{" "}
+                            {event.isPublished || event.status === "PUBLISHED"
+                              ? "প্রকাশিত"
+                              : "খসড়া"}
+                          </small>
+                        </div>
+                        <div className="rowflex">
+                          {!event.isPublished && event.status !== "PUBLISHED" && (
                             <Button
-                              className="btn grn sm"
+                              size="sm"
+                              variant="outline"
+                              className="btn gho sm"
                               onClick={() => void publishEvent(event.id)}
                             >
                               প্রকাশ করুন
                             </Button>
                           )}
                           <Button
+                            size="sm"
+                            variant="outline"
                             className="btn gho sm"
                             onClick={() => void copyEvent(event.id)}
                           >
-                            কপি
+                            পরবর্তী মাসে কপি
                           </Button>
-                          <Button
-                            className="btn gho sm"
-                            onClick={() => openEdit(event)}
-                          >
-                            সম্পাদনা
-                          </Button>
-                          <Button
-                            className="btn gho sm"
-                            onClick={() => setView("collection")}
-                          >
-                            আদায়
-                          </Button>
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          {!events.length && <div className="admin-empty">কোনো ফি ইভেন্ট নেই।</div>}
-          <div className="alert b" style={{ margin: "0 18px 16px" }}>
-            <span>
-              <b>ফি ইভেন্ট মডেল:</b> ইভেন্ট প্রকাশ করলেই সংশ্লিষ্ট শ্রেণির প্রতিটি
-              শিক্ষার্থীর জন্য বকেয়া তৈরি হয়; আদায় ট্যাব থেকে পেমেন্ট নিলে রসিদ তৈরি হয়।
-            </span>
-          </div>
-        </div>
-      )}
-
-      {view === "form" && (
-        <div className="card">
-          <div className="chead">
-            <h3 className="ct">{editingId ? "ফি ইভেন্ট সম্পাদনা" : "নতুন ফি ইভেন্ট"}</h3>
-          </div>
-          <div className="fgrid">
-            <div>
-              <label className="lbl">
-                ইভেন্টের নাম <span className="req">*</span>
-              </label>
-              <Input
-                className="inp"
-                placeholder="যেমন: জানুয়ারি মাসের বেতন"
-                value={form.nameBn}
-                onChange={(e) => setForm({ ...form, nameBn: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="lbl">ফির ধরন</label>
-              <Select
-                className="sel"
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-              >
-                {TYPE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="full">
-              <label className="lbl">বিবরণ</label>
-              <RichTextEditor
-                value={form.description}
-                onChange={(description) => setForm({ ...form, description })}
-              />
-            </div>
-            <div>
-              <label className="lbl">
-                পরিশোধের শেষ তারিখ <span className="req">*</span>
-              </label>
-              <Input
-                className="inp"
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="lbl">বিলম্ব ফি (টাকা)</label>
-              <Input
-                className="inp num"
-                type="number"
-                min="0"
-                placeholder="০"
-                value={form.lateFeeTaka}
-                onChange={(e) => setForm({ ...form, lateFeeTaka: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 18 }}>
-            <label className="lbl">
-              শ্রেণিভেদে ফির পরিমাণ (টাকা) <span className="req">*</span>
-            </label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {classRows.map((row, index) => (
-                <div className="rowflex" key={index}>
-                  <div style={{ flex: 1, minWidth: 180 }}>
-                    <Select
-                      className="sel"
-                      value={row.classId}
-                      onChange={(e) => {
-                        const next = [...classRows];
-                        next[index] = { ...row, classId: e.target.value };
-                        setClassRows(next);
-                      }}
-                    >
-                      <option value="">শ্রেণি নির্বাচন করুন</option>
-                      {classes.map((cls) => (
-                        <option key={cls.id} value={cls.id}>
-                          {cls.nameBn}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div style={{ width: 180 }}>
-                    <Input
-                      className="inp num"
-                      type="number"
-                      min="0"
-                      placeholder="টাকার পরিমাণ"
-                      value={row.amountTaka}
-                      onChange={(e) => {
-                        const next = [...classRows];
-                        next[index] = { ...row, amountTaka: e.target.value };
-                        setClassRows(next);
-                      }}
-                    />
-                  </div>
-                  <Button
-                    className="btn gho sm"
-                    disabled={classRows.length <= 1}
-                    onClick={() =>
-                      setClassRows(classRows.filter((_, i) => i !== index))
+                          <DeleteButton
+                            itemLabel={String(event.nameBn ?? "ফি ইভেন্ট")}
+                            size="sm"
+                            onDelete={() =>
+                              apiDelete(
+                                `/api/backend/finance/fee-events/${event.id}`,
+                              ).then(() => undefined)
+                            }
+                            onDeleted={loadEvents}
+                            successMessage="ফি ইভেন্ট মুছে ফেলা হয়েছে"
+                          />
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="admin-empty">কোনো ইভেন্ট নেই।</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          <section>
+            <Card className="card">
+              <CardHeader>
+                <CardTitle>বকেয়া ও সংগ্রহ</CardTitle>
+                <p>শ্রেণি, শাখা ও status দিয়ে খুঁজুন।</p>
+              </CardHeader>
+              <CardContent>
+                <div className="finance-filters">
+                  <Input className="inp"
+                    placeholder="শ্রেণি ID"
+                    value={filters.classId}
+                    onChange={(e) =>
+                      setFilters({ ...filters, classId: e.target.value })
+                    }
+                  />
+                  <Input className="inp"
+                    placeholder="শাখা ID"
+                    value={filters.sectionId}
+                    onChange={(e) =>
+                      setFilters({ ...filters, sectionId: e.target.value })
+                    }
+                  />
+                  <Select className="sel"
+                    value={filters.status}
+                    onChange={(e) =>
+                      setFilters({ ...filters, status: e.target.value })
                     }
                   >
-                    সরান
-                  </Button>
+                    <option value="">সব স্ট্যাটাস</option>
+                    <option value="DUE">বকেয়া</option>
+                    <option value="PARTIAL">আংশিক</option>
+                    <option value="PAID">পরিশোধিত</option>
+                  </Select>
+                  <Button className="btn gho" onClick={() => void loadDues()}>ফিল্টার</Button>
                 </div>
-              ))}
-            </div>
-            <Button
-              className="btn gho sm"
-              style={{ marginTop: 10 }}
-              onClick={() =>
-                setClassRows([...classRows, { classId: "", amountTaka: "" }])
-              }
-            >
-              আরেকটি শ্রেণি যোগ করুন
-            </Button>
-          </div>
-
-          <div className="rowflex" style={{ marginTop: 18 }}>
-            <label className="sw">
-              <input
-                type="checkbox"
-                checked={form.isPublished}
-                onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-              />
-              <span className="tr" />
-            </label>
-            <span className="small">প্রকাশসহ সংরক্ষণ (প্রকাশ করলেই বকেয়া তৈরি হবে)</span>
-          </div>
-
-          {error && <p className="alert r" style={{ marginTop: 14 }}>{error}</p>}
-
-          <div className="rowflex" style={{ marginTop: 20 }}>
-            <Button className="btn gho" onClick={() => setView("list")}>
-              বাতিল
-            </Button>
-            <Button className="btn grn" onClick={() => void saveEvent()}>
-              {form.isPublished ? "প্রকাশসহ সংরক্ষণ করুন" : "সংরক্ষণ করুন"}
-            </Button>
-          </div>
-          <p className="hint" style={{ marginTop: 10 }}>
-            বিস্তারিত রিপোর্টের জন্য <Link href="/dashboard/reports">রিপোর্টসমূহ</Link> দেখুন।
-          </p>
-        </div>
-      )}
-
-      {view === "collection" && (
-        <>
-          <div className="card filterbar">
-            <div className="fld">
-              <label className="lbl">শ্রেণি</label>
-              <Select
-                className="sel"
-                value={filters.classId}
-                onChange={(e) =>
-                  setFilters({ ...filters, classId: e.target.value, sectionId: "" })
-                }
-              >
-                <option value="">সব শ্রেণি</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.nameBn}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="fld">
-              <label className="lbl">শাখা</label>
-              <Select
-                className="sel"
-                value={filters.sectionId}
-                onChange={(e) => setFilters({ ...filters, sectionId: e.target.value })}
-              >
-                <option value="">সব শাখা</option>
-                {filteredSections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.nameBn}
-                    {section.classNameBn ? ` (${section.classNameBn})` : ""}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="fld">
-              <label className="lbl">অবস্থা</label>
-              <Select
-                className="sel"
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              >
-                <option value="">সব</option>
-                <option value="DUE">বকেয়া</option>
-                <option value="PARTIAL">আংশিক</option>
-                <option value="PAID">পরিশোধিত</option>
-              </Select>
-            </div>
-            <Button className="btn" onClick={() => void loadDues()}>
-              খুঁজুন
-            </Button>
-            <Button
-              className="btn gho"
-              onClick={() => {
-                const cleared = { classId: "", sectionId: "", status: "" };
-                setFilters(cleared);
-                void loadDues(cleared);
-              }}
-            >
-              সব দেখুন
-            </Button>
-          </div>
-
-          <div className="card flush">
-            <div className="tw">
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>শিক্ষার্থী</th>
-                    <th>ইভেন্ট</th>
-                    <th>শ্রেণি-শাখা</th>
-                    <th className="r">মোট</th>
-                    <th className="r">পরিশোধিত</th>
-                    <th className="r">বাকি</th>
-                    <th>অবস্থা</th>
-                    <th className="r">কার্যকলাপ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dues.map((row) => {
-                    const remaining = row.amount - row.paidAmount;
-                    return (
-                      <tr key={row.id}>
-                        <td>
-                          <div className="person">
-                            <div>
-                              <div className="nm">{row.studentNameBn ?? "শিক্ষার্থী"}</div>
-                              <div className="ds num">
-                                রেজি: {bn(row.registrationNumber ?? "—")}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{row.eventNameBn ?? "—"}</td>
-                        <td>
-                          {row.classNameBn ?? "—"}
-                          {row.sectionNameBn ? ` · ${row.sectionNameBn}` : ""}
-                        </td>
-                        <td className="r num">{takaLabel(row.amount)}</td>
-                        <td className="r num">{takaLabel(row.paidAmount)}</td>
-                        <td className="r num b">{takaLabel(remaining)}</td>
-                        <td>{statusChip(row.status)}</td>
-                        <td className="r">
-                          {row.status === "DUE" || row.status === "PARTIAL" ? (
-                            <Button className="btn sm" onClick={() => openPayment(row)}>
-                              পেমেন্ট নিন
-                            </Button>
-                          ) : (
-                            <span className="small muted">—</span>
-                          )}
-                        </td>
+                <div className="tw">
+                  <table className="tbl finance-table">
+                    <thead>
+                      <tr>
+                        <th>শিক্ষার্থী</th>
+                        <th>মোট</th>
+                        <th>বাকি</th>
+                        <th>অবস্থা</th>
+                        <th />
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {!dues.length && (
-              <div className="admin-empty">এই ফিল্টারে কোনো বকেয়া নেই।</div>
-            )}
-          </div>
-        </>
-      )}
-
-      {payDue && (
-        <div className="modal-wrap" style={{ position: "fixed", zIndex: 60 }}>
-          <div className="modal">
-            {!receipt ? (
-              <>
-                <div className="mhead">
-                  <h3 className="ct" style={{ margin: 0 }}>
-                    পেমেন্ট গ্রহণ করুন
-                  </h3>
-                  <span style={{ flex: 1 }} />
-                  <Button className="btn gho sm" onClick={() => setPayDue(null)}>
-                    বন্ধ করুন
-                  </Button>
-                </div>
-                <p className="cs" style={{ margin: "0 0 12px" }}>
-                  {payDue.studentNameBn ?? "শিক্ষার্থী"}
-                  {payDue.registrationNumber
-                    ? ` (${bn(payDue.registrationNumber)})`
-                    : ""}{" "}
-                  · {payDue.eventNameBn ?? ""} · মোট {takaLabel(payDue.amount)} ·
-                  পরিশোধিত {takaLabel(payDue.paidAmount)} · বাকি{" "}
-                  {takaLabel(payDue.amount - payDue.paidAmount)}
-                </p>
-                <div className="fgrid">
-                  <div>
-                    <label className="lbl">
-                      পরিমাণ (টাকা) <span className="req">*</span>
-                    </label>
-                    <Input
-                      className="inp num"
-                      type="number"
-                      min="0"
-                      value={payForm.amountTaka}
-                      onChange={(e) =>
-                        setPayForm({ ...payForm, amountTaka: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="lbl">মাধ্যম</label>
-                    <Select
-                      className="sel"
-                      value={payForm.method}
-                      onChange={(e) =>
-                        setPayForm({ ...payForm, method: e.target.value })
-                      }
-                    >
-                      {METHODS.map((method) => (
-                        <option key={method} value={method}>
-                          {method}
-                        </option>
+                    </thead>
+                    <tbody>
+                      {(dues ?? []).map((row) => (
+                        <tr key={row.id}>
+                          <td>{String(row.studentId)}</td>
+                          <td>{formatTaka(Number(row.amount))}</td>
+                          <td>
+                            {formatTaka(
+                              Number(row.amount) - Number(row.paidAmount),
+                            )}
+                          </td>
+                          <td>
+                            <Badge
+                              variant={
+                                row.status === "PAID"
+                                  ? "success"
+                                  : row.status === "PARTIAL"
+                                    ? "warning"
+                                    : "destructive"
+                              }
+                            >
+                              {String(row.status)}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="btn sec sm"
+                              onClick={() => {
+                                setPayRow(row);
+                                setLastReceipt(null);
+                                setPayment({
+                                  id: row.id,
+                                  amount: String(
+                                    Number(row.amount) - Number(row.paidAmount),
+                                  ),
+                                  method: "ক্যাশ",
+                                });
+                              }}
+                            >
+                              সংগ্রহ
+                            </Button>
+                          </td>
+                        </tr>
                       ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="lbl">তারিখ</label>
-                    <Input
-                      className="inp"
-                      type="date"
-                      value={payForm.paidAt}
-                      onChange={(e) =>
-                        setPayForm({ ...payForm, paidAt: e.target.value })
-                      }
-                    />
-                  </div>
+                    </tbody>
+                  </table>
+                  {dues === null ? (
+                    <ListSkeleton rows={3} />
+                  ) : !dues.length ? (
+                    <div className="admin-empty">
+                      এই ফিল্টারে কোনো বকেয়া নেই।
+                    </div>
+                  ) : null}
                 </div>
-                {error && <p className="alert r" style={{ marginTop: 12 }}>{error}</p>}
-                <div className="rowflex" style={{ marginTop: 16 }}>
-                  <Button
-                    className="btn grn"
-                    disabled={paying}
-                    onClick={() => void submitPayment()}
+              </CardContent>
+            </Card>
+            {payment.id && (
+              <Card className="card collection-card">
+                <CardHeader>
+                  <CardTitle>পেমেন্ট গ্রহণ ও রসিদ</CardTitle>
+                </CardHeader>
+                <CardContent className="finance-form">
+                  <Input className="inp"
+                    type="number"
+                    value={payment.amount}
+                    onChange={(e) =>
+                      setPayment({ ...payment, amount: e.target.value })
+                    }
+                    placeholder="পরিমাণ (পয়সা)"
+                  />
+                  <Select className="sel"
+                    value={payment.method}
+                    onChange={(e) =>
+                      setPayment({ ...payment, method: e.target.value })
+                    }
                   >
-                    {paying ? "প্রক্রিয়াকরণ চলছে…" : "পেমেন্ট গ্রহণ করুন"}
+                    <option>ক্যাশ</option>
+                    <option>বিকাশ</option>
+                    <option>ব্যাংক</option>
+                  </Select>
+                  <Button className="btn grn" onClick={() => void pay()}>
+                    সংরক্ষণ ও রসিদ তৈরি
                   </Button>
-                  <Button className="btn gho" onClick={() => setPayDue(null)}>
-                    বাতিল
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="mhead">
-                  <h3 className="ct" style={{ margin: 0 }}>
-                    পেমেন্ট সফল হয়েছে
-                  </h3>
-                  <span style={{ flex: 1 }} />
-                  <Button className="btn gho sm" onClick={() => setPayDue(null)}>
-                    বন্ধ করুন
-                  </Button>
-                </div>
-                <div className="receipt" style={{ marginTop: 10 }}>
-                  <div style={{ textAlign: "center" }}>
-                    <b style={{ color: "var(--p800)" }}>
-                      {schoolName || "বিদ্যালয়"}
-                    </b>
-                    <div className="small muted">টাকা গ্রহণের রশিদ</div>
-                  </div>
-                  <div className="divider" style={{ margin: "9px 0" }} />
-                  <div className="rowflex" style={{ justifyContent: "space-between" }}>
-                    <span>
-                      রশিদ নং: <b className="num">{bn(receipt.receiptNumber)}</b>
-                    </span>
-                    <span>তারিখ: {bnDate(receipt.paidAt)}</span>
-                  </div>
-                  <div className="rowflex" style={{ justifyContent: "space-between" }}>
-                    <span>
-                      শিক্ষার্থী: {receipt.studentNameBn ?? "—"}
-                      {receipt.classNameBn ? ` · ${receipt.classNameBn}` : ""}
-                      {receipt.sectionNameBn ? ` (${receipt.sectionNameBn})` : ""}
-                    </span>
-                    <span className="num">
-                      রেজি: {bn(receipt.registrationNumber ?? "—")}
-                    </span>
-                  </div>
-                  <div className="rowflex" style={{ justifyContent: "space-between" }}>
-                    <span>বিবরণ: {receipt.eventNameBn ?? "—"}</span>
-                    <b>{takaLabel(takaToPaisa(receipt.amountTaka))}</b>
-                  </div>
-                  <div className="rowflex" style={{ justifyContent: "space-between" }}>
-                    <span>
-                      মোট পরিশোধিত: {takaLabel(receipt.paidAmount)} · বাকি:{" "}
-                      {takaLabel(receipt.remaining)}
-                    </span>
-                    <span>মাধ্যম: {receipt.method}</span>
-                  </div>
-                  <div className="small muted" style={{ marginTop: 8 }}>
-                    যাচাই কোড: <span className="num">{bn(receipt.verifyCode)}</span> ·
-                    ওয়েবসাইটের &quot;রশিদ যাচাই&quot; পেজে এই কোড দিয়ে রশিদের সত্যতা
-                    যাচাই করা যায়।
-                  </div>
-                </div>
-                <div className="rowflex" style={{ marginTop: 16 }}>
-                  <Button className="btn" onClick={() => window.print()}>
-                    প্রিন্ট
-                  </Button>
-                  <Button
-                    className="btn gho"
-                    onClick={() => {
-                      setPayDue(null);
-                      setReceipt(null);
-                    }}
-                  >
-                    বন্ধ করুন
-                  </Button>
-                </div>
-              </>
+                </CardContent>
+              </Card>
             )}
-          </div>
+            {lastReceipt && (
+              <Card className="card">
+                <CardHeader>
+                  <CardTitle>সর্বশেষ রশিদ</CardTitle>
+                  <p>পেমেন্ট সফল হয়েছে — রশিদটি প্রিন্ট করে শিক্ষার্থীকে দিন।</p>
+                </CardHeader>
+                <CardContent>
+                  <ReceiptView data={lastReceipt} />
+                  <div className="rowflex" style={{ marginTop: 14 }}>
+                    <Button className="btn" onClick={() => printReceiptSheet()}>
+                      রশিদ প্রিন্ট করুন
+                    </Button>
+                    <Button
+                      className="btn gho"
+                      variant="outline"
+                      onClick={() => setLastReceipt(null)}
+                    >
+                      বন্ধ করুন
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </section>
         </div>
-      )}
+        {message && <p className="alert g">{message}</p>}
     </div>
   );
 }
