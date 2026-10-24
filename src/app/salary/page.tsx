@@ -9,6 +9,7 @@ import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { apiDelete } from "@/lib/admin-api";
 import { formatTaka } from "@/lib/format";
+import { printReceiptSheet, ReceiptView, type ReceiptData, type ReceiptSchool } from "@/components/finance/receipt";
 type Salary = {
   id: string;
   teacherId: string;
@@ -23,6 +24,8 @@ type Salary = {
 };
 export default function SalaryPage() {
   const [rows, setRows] = useState<Salary[] | null>(null);
+  const [school, setSchool] = useState<ReceiptSchool | null>(null);
+  const [receiptRow, setReceiptRow] = useState<Salary | null>(null);
   const [form, setForm] = useState({
     teacherId: "",
     salaryMonth: "",
@@ -40,6 +43,10 @@ export default function SalaryPage() {
   }
   useEffect(() => {
     void load();
+    void fetch("/api/school-settings", { cache: "no-store" })
+      .then((response) => response.json() as Promise<{ data?: { school?: ReceiptSchool } }>)
+      .then((payload) => setSchool(payload.data?.school ?? null))
+      .catch(() => undefined);
   }, []);
   async function pay() {
     const response = await fetch("/api/backend/finance/salary/pay", {
@@ -157,7 +164,10 @@ export default function SalaryPage() {
                             <Button
                               variant="outline"
                               className="btn gho sm"
-                              onClick={() => window.print()}
+                              onClick={() => {
+                                setReceiptRow(row);
+                                window.setTimeout(() => printReceiptSheet(), 0);
+                              }}
                             >
                               রসিদ প্রিন্ট
                             </Button>
@@ -180,6 +190,28 @@ export default function SalaryPage() {
             )}
           </CardContent>
         </Card>
+        {receiptRow && (
+          <ReceiptView
+            data={{
+              school,
+              receiptNumber: receiptRow.id,
+              paidAt: receiptRow.salaryMonth,
+              studentNameBn: receiptRow.teacherNameBn ?? receiptRow.teacherId,
+              eventNameBn: "মাসিক বেতন",
+              amount: receiptRow.net,
+              method: form.method,
+              receivedBy: "প্রশাসন",
+              receiptType: "salary",
+              employeeId: receiptRow.teacherId,
+              salaryMonth: receiptRow.salaryMonth,
+              basic: receiptRow.basic,
+              allowances: receiptRow.allowances,
+              deductions: receiptRow.deductions,
+              net: receiptRow.net,
+              status: receiptRow.status,
+            } satisfies ReceiptData}
+          />
+        )}
     </div>
   );
 }

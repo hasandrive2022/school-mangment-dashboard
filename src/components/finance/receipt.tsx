@@ -35,6 +35,14 @@ export type ReceiptData = {
   /** Paisa still due on the assignment after this payment, when known. */
   remaining?: number | null;
   receivedBy?: string | null;
+  receiptType?: "student" | "salary";
+  employeeId?: string | null;
+  salaryMonth?: string | null;
+  basic?: number;
+  allowances?: number;
+  deductions?: number;
+  net?: number;
+  status?: string | null;
 };
 
 const BN_BELOW_100 = [
@@ -97,8 +105,9 @@ export function ReceiptView({ data }: { data: ReceiptData }) {
   const classLine = [data.classNameBn, data.sectionNameBn]
     .filter(Boolean)
     .join(" · ");
+  const isSalary = data.receiptType === "salary";
   return (
-    <article className="receipt invoice-sheet receipt-sheet" aria-label="পেমেন্ট ইনভয়েস">
+    <article className="receipt invoice-sheet receipt-sheet" aria-label={isSalary ? "বেতন ইনভয়েস" : "পেমেন্ট ইনভয়েস"}>
       <header className="invoice-header">
         <div>
           <div className="invoice-kicker">OFFICIAL PAYMENT RECEIPT</div>
@@ -113,7 +122,7 @@ export function ReceiptView({ data }: { data: ReceiptData }) {
           )}
         </div>
         <div className="invoice-title">
-          <strong>টাকা গ্রহণের রশিদ</strong>
+          <strong>{isSalary ? "বেতন পরিশোধ ইনভয়েস" : "টাকা গ্রহণের রশিদ"}</strong>
           <span>মূল কপি</span>
         </div>
       </header>
@@ -121,15 +130,30 @@ export function ReceiptView({ data }: { data: ReceiptData }) {
         <div><span>রশিদ নং</span><b className="num">{bn(data.receiptNumber)}</b></div>
         <div><span>তারিখ</span><b className="num">{data.paidAt ? bn(String(data.paidAt).slice(0, 10)) : "—"}</b></div>
       </div>
-      <section className="invoice-student" aria-label="শিক্ষার্থীর তথ্য">
-        <div><span>শিক্ষার্থীর নাম</span><b>{data.studentNameBn}</b></div>
-        <div><span>শ্রেণি / শাখা</span><b>{classLine || "—"}</b></div>
-        <div><span>রেজিস্ট্রেশন নং</span><b className="num">{bn(data.registrationNumber ?? "—")}</b></div>
+      <section className="invoice-student" aria-label={isSalary ? "কর্মচারীর তথ্য" : "শিক্ষার্থীর তথ্য"}>
+        <div><span>{isSalary ? "শিক্ষকের নাম" : "শিক্ষার্থীর নাম"}</span><b>{data.studentNameBn}</b></div>
+        {isSalary ? (
+          <>
+            <div><span>বেতন মাস</span><b className="num">{bn(data.salaryMonth ?? "—")}</b></div>
+            <div><span>কর্মচারী আইডি</span><b className="num">{bn(data.employeeId ?? "—")}</b></div>
+          </>
+        ) : (
+          <>
+            <div><span>শ্রেণি / শাখা</span><b>{classLine || "—"}</b></div>
+            <div><span>রেজিস্ট্রেশন নং</span><b className="num">{bn(data.registrationNumber ?? "—")}</b></div>
+          </>
+        )}
       </section>
       <div className="invoice-table">
-        <div className="invoice-table-head"><span>পরিশোধের বিবরণ</span><span>পরিমাণ</span></div>
-        <div className="invoice-table-row"><span>{data.eventNameBn}</span><b>{formatTaka(data.amount)}</b></div>
-        <div className="invoice-total"><span>সর্বমোট পরিশোধ</span><strong>{formatTaka(data.amount)}</strong></div>
+        <div className="invoice-table-head"><span>{isSalary ? "বেতন বিবরণ" : "পরিশোধের বিবরণ"}</span><span>পরিমাণ</span></div>
+        {isSalary ? (
+          <>
+            <div className="invoice-table-row"><span>মূল বেতন</span><b>{formatTaka(data.basic ?? 0)}</b></div>
+            <div className="invoice-table-row"><span>ভাতা</span><b>{formatTaka(data.allowances ?? 0)}</b></div>
+            <div className="invoice-table-row"><span>কর্তন</span><b>− {formatTaka(data.deductions ?? 0)}</b></div>
+          </>
+        ) : <div className="invoice-table-row"><span>{data.eventNameBn}</span><b>{formatTaka(data.amount)}</b></div>}
+        <div className="invoice-total"><span>{isSalary ? "নেট বেতন" : "সর্বমোট পরিশোধ"}</span><strong>{formatTaka(data.amount)}</strong></div>
       </div>
       <div className="invoice-details">
         <span>কথায়: {takaInWords(data.amount)}</span>
