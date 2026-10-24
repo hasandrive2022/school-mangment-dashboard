@@ -691,7 +691,7 @@ export default function ContentManagementPage() {
               )}
             </>
           )}
-          {!isDedicated &&
+          {!isDedicated && !uploadKind &&
             (needsRichText ? (
               <div className="md:col-span-4">
                 <label className="mb-2 block text-sm font-semibold text-primary-800">

@@ -2,14 +2,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { generateReactHelpers } from "@uploadthing/react";
-import type { UploadRouter } from "@/app/api/uploadthing/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { bn } from "@/lib/format";
+import { UploadThingField } from "@/components/uploadthing-field";
 type School = {
   nameBn: string;
   nameEn: string;
@@ -21,7 +20,6 @@ type School = {
   logoUrl?: string;
   themeColor: string;
 };
-const { useUploadThing } = generateReactHelpers<UploadRouter>();
 export default function SettingsPage() {
   const router = useRouter();
   const [school, setSchool] = useState<School>({
@@ -36,11 +34,6 @@ export default function SettingsPage() {
     themeColor: "#0F3151",
   });
   const [message, setMessage] = useState("");
-  const [logoFileName, setLogoFileName] = useState("");
-  const { startUpload, isUploading } = useUploadThing("schoolBranding", {
-    onClientUploadComplete: (files) =>
-      setSchool((current) => ({ ...current, logoUrl: files[0]?.url ?? "" })),
-  });
   useEffect(() => {
     void fetch("/api/school-settings")
       .then((r) => r.json())
@@ -143,43 +136,18 @@ export default function SettingsPage() {
                 />
                 <div>
                   <span className="lbl">লোগো/সিল আপলোড</span>
-                  <label
-                    className="upbox"
-                    style={{
-                      display: "block",
-                      cursor: isUploading ? "wait" : "pointer",
-                    }}
-                  >
-                    {isUploading
-                      ? "আপলোড হচ্ছে…"
-                      : logoFileName
-                        ? `নির্বাচিত ফাইল: ${logoFileName}`
-                        : "লোগো আপলোড করতে এখানে চাপুন"}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/jpeg,image/png,image/webp"
-                      disabled={isUploading}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) {
-                          setLogoFileName(file.name);
-                          void startUpload([file]);
-                        }
-                      }}
-                    />
-                  </label>
+                  <UploadThingField
+                    endpoint="schoolBranding"
+                    value={school.logoUrl}
+                    onChange={(logoUrl) => setSchool((current) => ({ ...current, logoUrl }))}
+                    label="লোগো/সিল আপলোড করুন"
+                  />
                   {school.logoUrl && (
                     <small className="settings-success">
                       লোগো আপলোড সম্পন্ন — প্রিভিউতে দেখুন
                     </small>
                   )}
                 </div>
-                <Field
-                  label="লোগো URL"
-                  value={school.logoUrl ?? ""}
-                  onChange={(value) => setSchool({ ...school, logoUrl: value })}
-                />
                 <label>
                   থিম রং
                   <Input
@@ -190,7 +158,7 @@ export default function SettingsPage() {
                     }
                   />
                 </label>
-                <Button type="submit" className="btn" disabled={isUploading}>
+                <Button type="submit" className="btn">
                   সেটিংস সংরক্ষণ করুন
                 </Button>
                 {message && (

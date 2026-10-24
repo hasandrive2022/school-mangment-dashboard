@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { bn, bnNum, takaLabel, takaToPaisa } from "@/lib/format";
+import { UploadThingField } from "@/components/uploadthing-field";
 
 type StudentRow = {
   id: string;
@@ -710,17 +711,12 @@ export default function PeoplePage() {
                 />
               </div>
               <div>
-                <label className="lbl" htmlFor="tf-photo">
-                  ছবির ঠিকানা
-                </label>
-                <Input
-                  id="tf-photo"
-                  className="inp"
+                <label className="lbl">শিক্ষকের ছবি</label>
+                <UploadThingField
+                  endpoint="profileImage"
                   value={teacherForm.photoUrl}
-                  onChange={(e) =>
-                    setTeacherForm({ ...teacherForm, photoUrl: e.target.value })
-                  }
-                  placeholder="ছবির লিংক"
+                  onChange={(photoUrl) => setTeacherForm({ ...teacherForm, photoUrl })}
+                  label="শিক্ষকের ছবি আপলোড করুন"
                 />
               </div>
             </div>
