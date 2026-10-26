@@ -4,7 +4,9 @@ import { apiGet } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 export default function PromotionPage() {
+  const toast = useToast();
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [sessionId, setSessionId] = useState("");
   const [classId, setClassId] = useState("");
@@ -42,6 +44,8 @@ export default function PromotionPage() {
         ? `${payload.count ?? 0} জন শিক্ষার্থী প্রমোট হয়েছে।`
         : (payload.error ?? "প্রমোশন করা যায়নি।"),
     );
+    if (response.ok) toast.success(`${payload.count ?? 0} জন শিক্ষার্থী প্রমোট হয়েছে।`);
+    else toast.error(payload.error ?? "প্রমোশন করা যায়নি।");
   }
   return (
     <div className="dstack">
