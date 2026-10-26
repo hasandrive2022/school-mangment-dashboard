@@ -41,6 +41,7 @@ type ExamSubject = {
   practicalMarks?: number;
 };
 type SubjectOption = { id: string; nameBn?: string };
+type AcademicOption = { id: string; nameBn?: string; name?: string; year?: number };
 
 export default function ResultsPage() {
   const toast = useToast();
@@ -48,6 +49,8 @@ export default function ResultsPage() {
   const [exams, setExams] = useState<Exam[] | null>(null);
   const [examSubjects, setExamSubjects] = useState<ExamSubject[] | null>(null);
   const [subjectOptions, setSubjectOptions] = useState<SubjectOption[]>([]);
+  const [classOptions, setClassOptions] = useState<AcademicOption[]>([]);
+  const [sessionOptions, setSessionOptions] = useState<AcademicOption[]>([]);
   const [examSubjectExamId, setExamSubjectExamId] = useState("");
   const [examSubjectForm, setExamSubjectForm] = useState({
     subjectId: "",
@@ -114,9 +117,21 @@ export default function ResultsPage() {
     }
   }
   useEffect(() => {
-    void apiGet<{ data?: SubjectOption[] }>("/api/backend/academics/subjects")
-      .then((payload) => setSubjectOptions(payload.data ?? []))
-      .catch(() => setSubjectOptions([]));
+    void Promise.all([
+      apiGet<{ data?: SubjectOption[] }>("/api/backend/academics/subjects"),
+      apiGet<{ data?: AcademicOption[] }>("/api/backend/academics/classes"),
+      apiGet<{ data?: AcademicOption[] }>("/api/backend/academics/sessions"),
+    ])
+      .then(([subjects, classes, sessions]) => {
+        setSubjectOptions(subjects.data ?? []);
+        setClassOptions(classes.data ?? []);
+        setSessionOptions(sessions.data ?? []);
+      })
+      .catch(() => {
+        setSubjectOptions([]);
+        setClassOptions([]);
+        setSessionOptions([]);
+      });
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -176,7 +191,7 @@ export default function ResultsPage() {
     setMessage(
       response.ok
         ? "ফলাফল প্রসেস হয়েছে; পুনরায় চালালেও duplicate হবে না"
-        : "Exam ও class ID যাচাই করুন",
+        : "পরীক্ষা ও শ্রেণি নির্বাচন ঠিক আছে কি না যাচাই করুন",
     );
   }
   return (
@@ -202,20 +217,22 @@ export default function ResultsPage() {
                     setForm({ ...form, nameBn: event.target.value })
                   }
                 />
-                <Input className="inp"
-                  placeholder="শ্রেণি ID"
+                <Select className="sel"
                   value={form.classId}
                   onChange={(event) =>
                     setForm({ ...form, classId: event.target.value })
-                  }
-                />
-                <Input className="inp"
-                  placeholder="সেশন ID"
+                  }>
+                  <option value="">শ্রেণি নির্বাচন করুন</option>
+                  {classOptions.map((row) => <option key={row.id} value={row.id}>{row.nameBn ?? row.name ?? "শ্রেণি"}</option>)}
+                </Select>
+                <Select className="sel"
                   value={form.sessionId}
                   onChange={(event) =>
                     setForm({ ...form, sessionId: event.target.value })
-                  }
-                />
+                  }>
+                  <option value="">সেশন নির্বাচন করুন</option>
+                  {sessionOptions.map((row) => <option key={row.id} value={row.id}>{row.nameBn ?? row.name ?? row.year ?? "সেশন"}</option>)}
+                </Select>
                 <Input className="inp"
                   type="date"
                   value={form.examDate}
@@ -242,7 +259,7 @@ export default function ResultsPage() {
                         <b>{exam.nameBn}</b>
                         <small>
                           {exam.examDate ?? "তারিখ নেই"} ·{" "}
-                          {exam.classId ?? "শ্রেণি নেই"}
+                          {classOptions.find((row) => row.id === exam.classId)?.nameBn ?? "শ্রেণি নেই"}
                         </small>
                       </div>
                       <div className="flex gap-2">
@@ -259,13 +276,14 @@ export default function ResultsPage() {
                         >
                           {exam.isPublished ? "আপডেট" : "প্রকাশ করুন"}
                         </Button>
-                        <Input className="inp w-32"
-                          placeholder="Class ID"
+                        <Select className="sel w-32"
                           value={processClass}
                           onChange={(event) =>
                             setProcessClass(event.target.value)
-                          }
-                        />
+                          }>
+                          <option value="">শ্রেণি নির্বাচন</option>
+                          {classOptions.map((row) => <option key={row.id} value={row.id}>{row.nameBn ?? row.name ?? "শ্রেণি"}</option>)}
+                        </Select>
                         <Button size="sm" className="btn sm" onClick={() => void process(exam.id)}>
                           Process
                         </Button>

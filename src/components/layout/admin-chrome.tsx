@@ -28,6 +28,7 @@ const adminGroups = [
     title: "একাডেমিক",
     items: [
       ["শিক্ষার্থী ও শিক্ষক", "/dashboard/people", Users],
+      ["শিক্ষক পাসওয়ার্ড", "/people/teacher-password", Users],
       ["একাডেমিক কাঠামো", "/dashboard/academics", BookOpen],
       ["ক্লাস রুটিন", "/dashboard/routine", CalendarDays],
       ["উপস্থিতি রিপোর্ট", "/dashboard/attendance/reports", CalendarDays],
@@ -49,6 +50,7 @@ const adminGroups = [
     items: [
       ["কনটেন্ট", "/dashboard/content", FileText],
       ["বিদ্যালয়ের সেটিংস", "/dashboard/settings", Settings],
+      ["আমার পাসওয়ার্ড", "/settings/password", Settings],
     ],
   },
 ] as const;
@@ -100,6 +102,8 @@ const pageTitles: Array<[string, string]> = [
   ["/content", "ওয়েবসাইট কনটেন্ট"],
   ["/dashboard/settings", "বিদ্যালয়ের সেটিংস"],
   ["/settings", "বিদ্যালয়ের সেটিংস"],
+  ["/settings/password", "আমার পাসওয়ার্ড"],
+  ["/people/teacher-password", "শিক্ষকের পাসওয়ার্ড"],
   ["/demo-reset", "ডেমো ডেটা রিসেট"],
 ];
 
@@ -112,7 +116,7 @@ function titleFor(pathname: string) {
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isShellless = pathname === "/login" || pathname === "/dashboard";
+  const isShellless = pathname === "/login";
   const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
   );
@@ -121,7 +125,7 @@ export function AdminChrome({ children }: Props) {
   );
   const me = mePayload?.user;
   const schoolName = schoolPayload?.data?.school?.nameBn ?? "বিদ্যালয়";
-  if (pathname === "/login" || pathname === "/dashboard")
+  if (pathname === "/login")
     return <div className="dadmin">{children}</div>;
   if (isMeLoading || !me) {
     return (

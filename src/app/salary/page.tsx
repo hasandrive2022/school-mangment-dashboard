@@ -22,6 +22,7 @@ type Salary = {
   net: number;
   status: string;
 };
+type TeacherOption = { id: string; displayNameBn?: string; nameBn?: string; teacherCode?: string };
 export default function SalaryPage() {
   const [rows, setRows] = useState<Salary[] | null>(null);
   const [school, setSchool] = useState<ReceiptSchool | null>(null);
@@ -35,6 +36,7 @@ export default function SalaryPage() {
     method: "ক্যাশ",
   });
   const [message, setMessage] = useState("");
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   async function load() {
     const p = (await (await fetch("/api/backend/finance/salary")).json()) as {
       data?: Salary[];
@@ -43,6 +45,10 @@ export default function SalaryPage() {
   }
   useEffect(() => {
     void load();
+    void fetch("/api/backend/people/teachers")
+      .then((response) => response.json() as Promise<{ data?: TeacherOption[] }>)
+      .then((payload) => setTeachers(payload.data ?? []))
+      .catch(() => setTeachers([]));
     void fetch("/api/school-settings", { cache: "no-store" })
       .then((response) => response.json() as Promise<{ data?: { school?: ReceiptSchool } }>)
       .then((payload) => setSchool(payload.data?.school ?? null))
@@ -79,11 +85,13 @@ export default function SalaryPage() {
             <CardTitle>বেতন পরিশোধ</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3">
-            <Input className="inp"
-              placeholder="Teacher ID"
+            <Select className="sel"
               value={form.teacherId}
               onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
-            />
+            >
+              <option value="">শিক্ষক নির্বাচন করুন</option>
+              {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.displayNameBn ?? teacher.nameBn ?? "শিক্ষক"}{teacher.teacherCode ? ` · ${teacher.teacherCode}` : ""}</option>)}
+            </Select>
             <Input className="inp"
               type="month"
               value={form.salaryMonth}

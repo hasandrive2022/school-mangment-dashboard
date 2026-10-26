@@ -10,13 +10,11 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
-  Menu,
   Settings,
   User,
   Users,
   Wallet,
 } from "lucide-react";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { formatTaka } from "@/lib/format";
 
 type Props = {
@@ -27,7 +25,6 @@ type Props = {
 };
 
 export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [studentCount, setStudentCount] = useState<number | null>(null);
   const [teacherCount, setTeacherCount] = useState<number | null>(null);
   const [schoolName, setSchoolName] = useState("বিদ্যালয়");
@@ -244,70 +241,7 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
         ];
   const feeTotal = feeSummary.paid + feeSummary.partial + feeSummary.due;
   return (
-    <div className="app full">
-      <aside className={`side${sidebarOpen ? " open" : ""}`}>
-        <div className="brand">
-          <span className="logo">
-            <GraduationCap className="ic lg" />
-          </span>
-          <div>
-            <div className="bn">{schoolName}</div>
-            <div className="be">
-              {role === "TEACHER" ? "শিক্ষক প্যানেল" : "প্রশাসন প্যানেল"}
-            </div>
-          </div>
-        </div>
-        <nav aria-label="প্রধান নেভিগেশন">
-          {groups.map((group) => (
-            <div key={group.title}>
-              <p className="sg">{group.title}</p>
-              {group.items.map(({ label, href, icon: Icon }, index) => (
-                <Link
-                  href={href}
-                  key={label}
-                  className={`mi${group.title === "ওভারভিউ" && index === 0 ? " on" : ""}`}
-                >
-                  <Icon className="ic" />
-                  {label}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div className="who">
-          <span className="av">{displayNameBn.slice(0, 1)}</span>
-          <div>
-            <div className="wn">{displayNameBn}</div>
-            <div className="wr">
-              {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"}
-            </div>
-          </div>
-        </div>
-      </aside>
-      <div className="main">
-        <header className="topbar">
-          <button
-            type="button"
-            className="ibtn dash-menu-btn"
-            onClick={() => setSidebarOpen((value) => !value)}
-            aria-label="মেনু খুলুন/বন্ধ করুন"
-          >
-            <Menu className="ic sm" />
-          </button>
-          <span className="pt">ড্যাশবোর্ড</span>
-          <span style={{ flex: 1 }} />
-          <div className="tuser">
-            <span className="av">{displayNameBn.slice(0, 1)}</span>
-            <div>
-              <div className="nm">{displayNameBn}</div>
-              <div className="rl">
-                {role === "TEACHER" ? "শিক্ষক" : "প্রশাসক"} · {schoolName}
-              </div>
-            </div>
-          </div>
-          <SignOutButton />
-        </header>
-        <div className="content">
+    <div className="content">
           {role === "ADMIN" ? (
             <>
               <div className="g4">
@@ -550,8 +484,6 @@ export function AdminDashboard({ id, schoolId, displayNameBn, role }: Props) {
               </div>
             </>
           )}
-        </div>
-      </div>
     </div>
   );
 }

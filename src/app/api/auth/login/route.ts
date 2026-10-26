@@ -6,12 +6,11 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object")
     return NextResponse.json({ error: "অনুরোধটি সঠিক নয়" }, { status: 400 });
   const value = body as Record<string, unknown>;
-  const identifier =
-    typeof value.identifier === "string" ? value.identifier.trim() : "";
+  const email = typeof value.email === "string" ? value.email.trim() : "";
   const password = typeof value.password === "string" ? value.password : "";
-  if (!identifier || !password)
+  if (!email || !password)
     return NextResponse.json(
-      { error: "ইউজারনেম ও পাসওয়ার্ড দিন" },
+      { error: "ইমেইল ও পাসওয়ার্ড দিন" },
       { status: 400 },
     );
   const backendUrl = (
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ email, password }),
       cache: "no-store",
     });
     payload = await backendResponse.json().catch(() => null);
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
             ? message
             : backendResponse.status >= 500
               ? "ব্যাকএন্ড সাময়িকভাবে unavailable।"
-              : "ইউজারনেম বা পাসওয়ার্ড সঠিক নয়",
+            : "ইমেইল বা পাসওয়ার্ড সঠিক নয়",
       },
       { status: backendResponse.status >= 500 ? 502 : backendResponse.status },
     );

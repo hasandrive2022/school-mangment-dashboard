@@ -2,11 +2,12 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LoginForm() {
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -20,13 +21,13 @@ export function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
       };
       if (!response.ok) {
-        setError(data.error ?? "Sign-in failed.");
+          setError(data.error ?? "লগিন করা যায়নি।");
         return;
       }
       // The replacement navigation already fetches a fresh server tree. Calling
@@ -34,7 +35,7 @@ export function LoginForm() {
       // Next.js, which produces CLOSED writable stream errors in the preview.
       window.location.assign("/dashboard");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("সার্ভারে যোগাযোগ করা যায়নি। আবার চেষ্টা করুন।");
     } finally {
       setPending(false);
     }
@@ -47,19 +48,19 @@ export function LoginForm() {
         style={{ display: "flex", flexDirection: "column", gap: 14 }}
       >
         <div>
-          <label htmlFor="identifier" className="lbl">
-            ব্যবহারকারীর নাম / ইমেইল <span className="req">*</span>
+          <label htmlFor="email" className="lbl">
+            ইমেইল <span className="req">*</span>
           </label>
           <Input
-            id="identifier"
-            name="identifier"
-            type="text"
-            autoComplete="username"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
             required
-            value={identifier}
-            onChange={(event) => setIdentifier(event.target.value)}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             disabled={pending}
-            placeholder="ইমেইল বা ইউজারনেম"
+            placeholder="আপনার ইমেইল"
             className="inp"
           />
         </div>
@@ -107,6 +108,9 @@ export function LoginForm() {
         >
           {pending ? "প্রবেশ করা হচ্ছে…" : "লগিন করুন"}
         </Button>
+        <Link className="small muted" href="/forgot-password" style={{ textAlign: "center" }}>
+          পাসওয়ার্ড ভুলে গেছেন?
+        </Link>
       </form>
       <p className="small muted" style={{ textAlign: "center", marginTop: 16 }}>
         শুধুমাত্র অনুমোদিত প্রশাসক ও শিক্ষকদের জন্য।

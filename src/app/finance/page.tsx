@@ -50,6 +50,11 @@ export default function FinancePage() {
   const [meName, setMeName] = useState("");
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
   const [message, setMessage] = useState("");
+  const [classOptions, setClassOptions] = useState<Row[]>([]);
+  const [sectionOptions, setSectionOptions] = useState<Row[]>([]);
+  const [classCharges, setClassCharges] = useState<Array<{ classId: string; amount: string }>>([
+    { classId: "", amount: "" },
+  ]);
 
   async function loadEvents() {
     const payload = (await (
@@ -90,6 +95,15 @@ export default function FinancePage() {
   useEffect(() => {
     void loadEvents();
     void loadDues();
+    void Promise.all([
+      fetch("/api/backend/academics/classes"),
+      fetch("/api/backend/academics/sections"),
+    ]).then(async ([classesResponse, sectionsResponse]) => {
+      const classesPayload = (await classesResponse.json()) as { data?: Row[] };
+      const sectionsPayload = (await sectionsResponse.json()) as { data?: Row[] };
+      setClassOptions(classesPayload.data ?? []);
+      setSectionOptions(sectionsPayload.data ?? []);
+    }).catch(() => undefined);
   }, []);
   // School identity + collector name for the receipt (Round 9 wiring).
   useEffect(() => {
@@ -107,14 +121,11 @@ export default function FinancePage() {
       .catch(() => undefined);
   }, []);
   async function saveEvent() {
-    let classes: Array<{ classId: string; amount: number }>;
-    try {
-      classes = JSON.parse(form.classes) as Array<{
-        classId: string;
-        amount: number;
-      }>;
-    } catch {
-      setMessage("classes JSON সঠিক নয়");
+    const classes = classCharges
+      .filter((row) => row.classId && row.amount)
+      .map((row) => ({ classId: row.classId, amount: takaToPaisa(Number(row.amount)) }));
+    if (!classes.length) {
+      setMessage("কমপক্ষে একটি শ্রেণি ও ফি নির্বাচন করুন");
       return;
     }
     const response = await fetch("/api/backend/finance/fee-events", {
@@ -131,6 +142,7 @@ export default function FinancePage() {
     );
     if (response.ok) {
       setForm(emptyEvent);
+      setClassCharges([{ classId: "", amount: "" }]);
       await loadEvents();
     }
   }
@@ -296,13 +308,20 @@ export default function FinancePage() {
                     setForm({ ...form, lateFee: e.target.value })
                   }
                 />
-                <Input className="inp finance-wide"
-                  placeholder={'[{"classId":"...","amount":5000}]'}
-                  value={form.classes}
-                  onChange={(e) =>
-                    setForm({ ...form, classes: e.target.value })
-                  }
-                />
+                <div className="finance-wide dstack" style={{ gap: 8 }}>
+                  <label className="finance-label">প্রতি শ্রেণির ফি</label>
+                  {classCharges.map((charge, index) => (
+                    <div className="rowflex" key={`${index}-${charge.classId}`}>
+                      <Select className="sel" value={charge.classId} onChange={(event) => setClassCharges((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, classId: event.target.value } : row))}>
+                        <option value="">শ্রেণি নির্বাচন করুন</option>
+                        {classOptions.map((row) => <option key={row.id} value={row.id}>{String(row.nameBn ?? row.name ?? "শ্রেণি")}</option>)}
+                      </Select>
+                      <Input className="inp" type="number" min="0" placeholder="ফি (টাকা)" value={charge.amount} onChange={(event) => setClassCharges((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, amount: event.target.value } : row))} />
+                      {classCharges.length > 1 && <Button type="button" variant="ghost" onClick={() => setClassCharges((current) => current.filter((_, rowIndex) => rowIndex !== index))}>বাদ দিন</Button>}
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" onClick={() => setClassCharges((current) => [...current, { classId: "", amount: "" }])}>আরও শ্রেণি যোগ করুন</Button>
+                </div>
                 <Button className="btn" onClick={() => void saveEvent()}>
                   ইভেন্ট সংরক্ষণ করুন
                 </Button>
@@ -377,20 +396,24 @@ export default function FinancePage() {
               </CardHeader>
               <CardContent>
                 <div className="finance-filters">
-                  <Input className="inp"
-                    placeholder="শ্রেণি ID"
+                  <Select className="sel"
                     value={filters.classId}
                     onChange={(e) =>
                       setFilters({ ...filters, classId: e.target.value })
-                    }
-                  />
-                  <Input className="inp"
-                    placeholder="শাখা ID"
+                    }>
+                    <option value="">সব শ্রেণি</option>
+                    {classOptions.map((row) => <option key={row.id} value={row.id}>{String(row.nameBn ?? row.name ?? "শ্রেণি")}</option>)}
+                  </Select>
+                  <Select className="sel"
                     value={filters.sectionId}
                     onChange={(e) =>
                       setFilters({ ...filters, sectionId: e.target.value })
-                    }
-                  />
+                    }>
+                    <option value="">সব শাখা</option>
+                    {sectionOptions
+                      .filter((row) => !filters.classId || String(row.classId ?? "") === filters.classId)
+                      .map((row) => <option key={row.id} value={row.id}>{String(row.nameBn ?? row.name ?? "শাখা")}</option>)}
+                  </Select>
                   <Select className="sel"
                     value={filters.status}
                     onChange={(e) =>
