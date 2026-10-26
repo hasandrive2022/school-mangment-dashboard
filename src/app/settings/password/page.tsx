@@ -5,7 +5,6 @@ import { Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/toast";
 
 function PasswordField({
   id,
@@ -64,7 +63,6 @@ function PasswordField({
 }
 
 export default function PasswordPage() {
-  const toast = useToast();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -77,12 +75,10 @@ export default function PasswordPage() {
     setError("");
     if (newPassword.length < 12) {
       setError("নতুন পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।");
-      toast.error("নতুন পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।");
       return;
     }
     if (newPassword !== confirmPassword) {
       setError("নতুন পাসওয়ার্ড দুটির মিল নেই।");
-      toast.error("নতুন পাসওয়ার্ড দুটির মিল নেই।");
       return;
     }
     setSaving(true);
@@ -101,17 +97,14 @@ export default function PasswordPage() {
           ? payload.message.join(" ")
           : payload?.message ?? payload?.error;
         setError(detail ?? "পাসওয়ার্ড পরিবর্তন করা যায়নি।");
-        toast.error(detail ?? "পাসওয়ার্ড পরিবর্তন করা যায়নি।");
         return;
       }
       setMessage("পাসওয়ার্ড পরিবর্তন হয়েছে।");
-      toast.success("পাসওয়ার্ড পরিবর্তন হয়েছে।");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
       setError("সার্ভারে যোগাযোগ করা যায়নি।");
-      toast.error("সার্ভারে যোগাযোগ করা যায়নি।");
     } finally {
       setSaving(false);
     }

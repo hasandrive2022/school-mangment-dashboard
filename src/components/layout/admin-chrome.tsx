@@ -116,7 +116,7 @@ function titleFor(pathname: string) {
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isShellless = ["/login", "/forgot-password"].includes(pathname);
+  const isShellless = pathname === "/login";
   const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
   );
@@ -125,7 +125,7 @@ export function AdminChrome({ children }: Props) {
   );
   const me = mePayload?.user;
   const schoolName = schoolPayload?.data?.school?.nameBn ?? "বিদ্যালয়";
-  if (isShellless)
+  if (pathname === "/login")
     return <div className="dadmin">{children}</div>;
   if (isMeLoading || !me) {
     return (

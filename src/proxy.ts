@@ -6,8 +6,6 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
-  const isPublicAuthPage = pathname === "/login" || pathname === "/forgot-password";
-
   if (pathname === "/login") {
     if (token) {
       const session = await verifySessionToken(token);
@@ -17,8 +15,6 @@ export async function proxy(request: NextRequest) {
     }
     return NextResponse.next();
   }
-
-  if (isPublicAuthPage) return NextResponse.next();
 
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));

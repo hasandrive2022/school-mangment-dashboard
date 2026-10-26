@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { apiGet } from "@/lib/admin-api";
-import { useToast } from "@/components/ui/toast";
 type Teacher = { id: string; displayNameBn?: string; nameBn?: string; teacherCode?: string };
 export default function TeacherPasswordPage() {
-  const toast = useToast();
   const [teacherId, setTeacherId] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -24,7 +22,6 @@ export default function TeacherPasswordPage() {
     setError("");
     if (!teacherId || newPassword.length < 8) {
       setError("শিক্ষক নির্বাচন করে কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।");
-      toast.error("শিক্ষক নির্বাচন করে কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।");
       return;
     }
     setSaving(true);
@@ -39,7 +36,6 @@ export default function TeacherPasswordPage() {
     } | null;
     if (response.ok) {
       setMessage("পাসওয়ার্ড রিসেট হয়েছে।");
-      toast.success("পাসওয়ার্ড রিসেট হয়েছে।");
       setNewPassword("");
     } else {
       setError(

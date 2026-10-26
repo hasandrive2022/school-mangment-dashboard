@@ -108,15 +108,9 @@ export function LoginForm() {
         >
           {pending ? "প্রবেশ করা হচ্ছে…" : "লগিন করুন"}
         </Button>
-        <div style={{ textAlign: "center", marginTop: 2 }}>
-          <Link
-            href="/forgot-password"
-            className="btn gho"
-            style={{ display: "inline-flex", color: "var(--p700)", textDecoration: "none" }}
-          >
-            পাসওয়ার্ড ভুলে গেছেন?
-          </Link>
-        </div>
+        <Link className="small muted" href="/forgot-password" style={{ textAlign: "center" }}>
+          পাসওয়ার্ড ভুলে গেছেন?
+        </Link>
       </form>
       <p className="small muted" style={{ textAlign: "center", marginTop: 16 }}>
         শুধুমাত্র অনুমোদিত প্রশাসক ও শিক্ষকদের জন্য।

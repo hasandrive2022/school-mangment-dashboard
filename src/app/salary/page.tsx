@@ -8,7 +8,6 @@ import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { apiDelete } from "@/lib/admin-api";
-import { useToast } from "@/components/ui/toast";
 import { formatTaka, takaToPaisa } from "@/lib/format";
 import { printReceiptSheet, ReceiptView, type ReceiptData, type ReceiptSchool } from "@/components/finance/receipt";
 type Salary = {
@@ -25,7 +24,6 @@ type Salary = {
 };
 type TeacherOption = { id: string; displayNameBn?: string; nameBn?: string; teacherCode?: string };
 export default function SalaryPage() {
-  const toast = useToast();
   const [rows, setRows] = useState<Salary[] | null>(null);
   const [school, setSchool] = useState<ReceiptSchool | null>(null);
   const [receiptRow, setReceiptRow] = useState<Salary | null>(null);
@@ -72,8 +70,6 @@ export default function SalaryPage() {
         ? "বেতন পরিশোধ ও ledger-এ পোস্ট হয়েছে"
         : "বেতন সংরক্ষণ করা যায়নি",
     );
-    if (response.ok) toast.success("বেতন পরিশোধ ও ledger-এ পোস্ট হয়েছে");
-    else toast.error("বেতন সংরক্ষণ করা যায়নি");
     if (response.ok) await load();
   }
   return (
