@@ -11,7 +11,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton, StatSkeleton } from "@/components/ui/list-skeleton";
 import { useToast } from "@/components/ui/toast";
-import { apiDelete } from "@/lib/admin-api";
+import { apiDelete, apiPost } from "@/lib/admin-api";
 import { formatTaka, paisaToTaka, takaToPaisa } from "@/lib/format";
 import {
   printReceiptSheet,
@@ -144,6 +144,21 @@ export default function FinancePage() {
       setForm(emptyEvent);
       setClassCharges([{ classId: "", amount: "" }]);
       await loadEvents();
+    }
+  }
+  async function sendDueSms(id: string) {
+    try {
+      const payload = await apiPost<{ data: { sent: number; recipients: number; testMode: boolean } }>(
+        "/api/backend/sms/send-due",
+        { value: { feeEventId: id } },
+      );
+      toast.success(
+        payload.data.testMode
+          ? `টেস্ট মোড: ${payload.data.recipients} জনকে বকেয়া SMS লগ করা হয়েছে`
+          : `${payload.data.sent} জনকে বকেয়া SMS পাঠানো হয়েছে`,
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "বকেয়া SMS পাঠানো যায়নি");
     }
   }
   async function copyEvent(id: string) {
@@ -357,6 +372,16 @@ export default function FinancePage() {
                               onClick={() => void publishEvent(event.id)}
                             >
                               প্রকাশ করুন
+                            </Button>
+                          )}
+                          {(event.isPublished || event.status === "PUBLISHED") && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="btn gho sm"
+                              onClick={() => void sendDueSms(String(event.id))}
+                            >
+                              বকেয়া SMS
                             </Button>
                           )}
                           <Button

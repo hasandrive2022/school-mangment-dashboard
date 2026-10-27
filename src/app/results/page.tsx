@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -183,6 +184,21 @@ export default function ResultsPage() {
     setMessage(response.ok ? "ফলাফল প্রকাশিত হয়েছে" : "প্রকাশ করা যায়নি");
     await load();
   }
+  async function sendResultSms(id: string) {
+    try {
+      const payload = await apiPost<{ data: { sent: number; recipients: number; testMode: boolean } }>(
+        "/api/backend/sms/send-result",
+        { value: { examId: id } },
+      );
+      toast.success(
+        payload.data.testMode
+          ? `টেস্ট মোড: ${payload.data.recipients} জনকে ফলাফল SMS লগ করা হয়েছে`
+          : `${payload.data.sent} জনকে ফলাফল SMS পাঠানো হয়েছে`,
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ফলাফল SMS পাঠানো যায়নি");
+    }
+  }
   async function process(id: string) {
     const response = await fetch(
       `/api/backend/results/exams/${id}/process/${processClass}`,
@@ -276,6 +292,22 @@ export default function ResultsPage() {
                         >
                           {exam.isPublished ? "আপডেট" : "প্রকাশ করুন"}
                         </Button>
+                        {exam.isPublished ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="btn gho sm"
+                            onClick={() => void sendResultSms(exam.id)}
+                          >
+                            রেজাল্ট SMS
+                          </Button>
+                        ) : null}
+                        <Link
+                          className="btn gho sm"
+                          href={`/dashboard/admit-cards?examId=${exam.id}`}
+                        >
+                          প্রবেশপত্র
+                        </Link>
                         <Select className="sel w-32"
                           value={processClass}
                           onChange={(event) =>

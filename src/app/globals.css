@@ -1204,7 +1204,46 @@ main.min-h-screen.bg-neutral-50 select {
     border: 0; border-top: 5px solid var(--p800); border-radius: 0; box-shadow: none;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+  body.printing-admit * { visibility: hidden; }
+  body.printing-admit .admit-sheet, body.printing-admit .admit-sheet * { visibility: visible; }
+  body.printing-admit .admit-sheet {
+    position: fixed; inset: 0; width: 100%; max-width: none; margin: 0; padding: 8mm;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  body.printing-admit .admit-card { break-inside: avoid; }
 }
+/* ---- Admit cards (প্রবেশপত্র) ---- */
+.admit-sheet { display: grid; gap: 14px; margin-top: 14px; }
+.admit-grid-2 { grid-template-columns: 1fr; }
+.admit-grid-4 { grid-template-columns: 1fr 1fr; }
+.admit-card {
+  border: 1.5px solid var(--p800, #123f66); border-radius: 10px; padding: 12px 14px;
+  background: #fff; font-size: 12.5px; line-height: 1.45;
+}
+.admit-head { display: flex; gap: 10px; align-items: center; }
+.admit-logo { width: 44px; height: 44px; object-fit: contain; }
+.admit-school h3 { margin: 0; font-size: 16.5px; color: var(--p800, #123f66); }
+.admit-school p { margin: 0; font-size: 11px; color: #444; }
+.admit-band {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  margin: 8px 0; padding: 4px 10px; border-radius: 6px;
+  background: var(--p800, #123f66); color: #fff;
+}
+.admit-band span { font-weight: 700; letter-spacing: .02em; }
+.admit-band b { font-weight: 600; font-size: 12px; text-align: right; }
+.admit-body { display: flex; gap: 12px; }
+.admit-info { border-collapse: collapse; flex: 1; }
+.admit-info th { text-align: left; font-weight: 600; padding: 1.5px 8px 1.5px 0; white-space: nowrap; color: #333; vertical-align: top; }
+.admit-info td { padding: 1.5px 0; }
+.admit-photo {
+  width: 76px; height: 92px; flex: none; border: 1px solid #999; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; color: #888; overflow: hidden;
+}
+.admit-photo img { width: 100%; height: 100%; object-fit: cover; }
+.admit-subjects { margin-top: 7px; font-size: 11.5px; }
+.admit-note { margin: 7px 0 0; font-size: 10.5px; color: #555; }
+.admit-signs { display: flex; justify-content: space-between; margin-top: 26px; font-size: 11px; }
+.admit-signs span { border-top: 1px dotted #666; padding-top: 3px; }
 .rich-editor {
   overflow: hidden;
   border: 1px solid #e5e7eb;
