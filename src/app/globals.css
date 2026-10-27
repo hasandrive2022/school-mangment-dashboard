@@ -1196,81 +1196,1148 @@ main.min-h-screen.bg-neutral-50 select {
   .invoice-footer { gap: 24px; }
   .invoice-signature { align-self: flex-end; }
 }
+@page admit {
+  size: A4 portrait;
+  margin: 8mm;
+}
 @media print {
-  body.printing-receipt * { visibility: hidden; }
-  body.printing-receipt .receipt-sheet, body.printing-receipt .receipt-sheet * { visibility: visible; }
+  body.printing-receipt * {
+    visibility: hidden;
+  }
+  body.printing-receipt .receipt-sheet,
+  body.printing-receipt .receipt-sheet * {
+    visibility: visible;
+  }
   body.printing-receipt .receipt-sheet {
-    position: fixed; inset: 0; width: 100%; max-width: none; margin: 0; padding: 28px;
-    border: 0; border-top: 5px solid var(--p800); border-radius: 0; box-shadow: none;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 28px;
+    border: 0;
+    border-top: 5px solid var(--p800);
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  body.printing-admit * { visibility: hidden; }
-  body.printing-admit .admit-sheet, body.printing-admit .admit-sheet * { visibility: visible; }
+
+  body.printing-admit {
+    display: block !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  body.printing-admit .dadmin .side,
+  body.printing-admit .dadmin .topbar,
+  body.printing-admit .no-print {
+    display: none !important;
+  }
+  body.printing-admit .dadmin,
+  body.printing-admit .dadmin .app.full,
+  body.printing-admit .dadmin .main,
+  body.printing-admit .dadmin .content,
+  body.printing-admit .admit-page,
   body.printing-admit .admit-sheet {
-    position: fixed; inset: 0; width: 100%; max-width: none; margin: 0; padding: 8mm;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
   }
-  body.printing-admit .admit-card { break-inside: avoid; }
-  body.printing-admit .admit-grid-1 {
-    position: static; width: auto; padding: 0; margin: 0; gap: 0;
+  body.printing-admit .dadmin .app.full,
+  body.printing-admit .dadmin .main,
+  body.printing-admit .dadmin .content {
+    height: auto !important;
   }
-  body.printing-admit .admit-grid-1 .admit-card {
-    min-height: calc(297mm - 16mm); box-sizing: border-box;
-    break-after: page; page-break-after: always;
+  body.printing-admit .admit-page {
+    gap: 0 !important;
   }
-  body.printing-admit .admit-grid-1 .admit-card:last-child {
-    break-after: auto; page-break-after: auto;
+  body.printing-admit .admit-print-page {
+    page: admit;
+    display: flex !important;
+    flex-direction: column;
+    width: 100% !important;
+    height: 281mm !important;
+    min-height: 281mm !important;
+    max-height: 281mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.printing-admit .admit-print-page + .admit-print-page {
+    break-before: page;
+    page-break-before: always;
+  }
+  body.printing-admit .admit-page-grid {
+    display: grid !important;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    gap: 5mm !important;
+  }
+  body.printing-admit .admit-page-grid-1 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+  body.printing-admit .admit-page-grid-2 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body.printing-admit .admit-page-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body.printing-admit .admit-card {
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
+
 /* ---- Admit cards (প্রবেশপত্র) ---- */
-.admit-sheet { display: grid; gap: 14px; margin-top: 14px; }
-.admit-grid-1 { grid-template-columns: 1fr; }
-.admit-grid-2 { grid-template-columns: 1fr; }
-.admit-grid-4 { grid-template-columns: 1fr 1fr; }
+.admit-page {
+  --admit-navy: #173650;
+  --admit-ink: #20384d;
+  --admit-muted: #687887;
+  --admit-gold: #b18a4e;
+  --admit-line: #e3e7e9;
+  display: grid;
+  gap: 22px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 28px;
+  color: var(--admit-ink);
+}
+.admit-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 170px;
+  padding: 28px 32px;
+  overflow: hidden;
+  border: 1px solid #294b63;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #112b42 0%, #173c56 70%, #254a60 100%);
+  color: #fff;
+  box-shadow: 0 14px 34px rgba(15, 41, 62, 0.14);
+}
+.admit-hero::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #dbc28f, #a98042);
+  content: "";
+}
+.admit-hero-icon {
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(235, 216, 176, 0.5);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ead8b2;
+}
+.admit-hero-icon svg {
+  width: 29px;
+  height: 29px;
+}
+.admit-hero-copy {
+  min-width: 0;
+}
+.admit-hero-eyebrow,
+.admit-step-label {
+  margin: 0 0 7px;
+  color: var(--admit-gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+.admit-hero-eyebrow {
+  color: #e4c994;
+}
+.admit-hero-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.admit-hero-description {
+  max-width: 660px;
+  margin: 8px 0 0;
+  color: #d4e0e8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.admit-format-badge {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 11px;
+  margin-left: auto;
+  padding: 12px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.admit-format-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(234, 216, 178, 0.13);
+  color: #ead8b2;
+}
+.admit-format-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.admit-format-badge > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.admit-format-badge strong {
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.admit-format-badge small {
+  color: #d4e0e8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.dadmin .card.admit-config-card {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e1e6e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(20, 45, 65, 0.055);
+}
+.dadmin .admit-config-card > [data-slot="card-header"] {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid #edf0f1;
+}
+.admit-config-icon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid #e6dcc7;
+  border-radius: 13px;
+  background: #faf7ef;
+  color: var(--admit-navy);
+}
+.admit-config-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.admit-config-heading {
+  min-width: 0;
+}
+.admit-config-heading .admit-step-label {
+  display: block;
+  margin-bottom: 2px;
+}
+.admit-config-title {
+  margin: 0;
+  color: var(--admit-navy);
+  font-size: 19px;
+  font-weight: 700;
+}
+.admit-config-description {
+  margin: 3px 0 0;
+  color: var(--admit-muted);
+  font-size: 13px;
+}
+.admit-ready-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 6px 10px;
+  border: 1px solid #d4e8dc;
+  border-radius: 999px;
+  background: #f1f8f3;
+  color: #286544;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admit-ready-status svg {
+  width: 15px;
+  height: 15px;
+}
+.dadmin .admit-config-card > [data-slot="card-content"] {
+  padding: 22px 26px 24px;
+}
+.admit-config-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.admit-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+.admit-field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--admit-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.admit-field-label small {
+  color: #8995a0;
+  font-size: 11px;
+  font-weight: 400;
+  text-align: right;
+}
+.dadmin .admit-config-card .admit-select {
+  height: 44px;
+  border-color: #d8e0e5;
+  border-radius: 9px;
+  background-color: #fff;
+  color: var(--admit-ink);
+  font-size: 14px;
+}
+.dadmin .admit-config-card .admit-select:focus-visible {
+  outline: 2px solid rgba(177, 138, 78, 0.25);
+  border-color: var(--admit-gold);
+}
+.admit-instructions-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 18px;
+}
+.dadmin .admit-config-card .admit-instructions-input {
+  min-height: 82px;
+  padding: 11px 13px;
+  border-color: #d8e0e5;
+  border-radius: 9px;
+  color: var(--admit-ink);
+  font-size: 13px;
+  line-height: 1.65;
+  resize: vertical;
+}
+.admit-config-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0f1;
+}
+.admit-student-count {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.admit-count-icon {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: #f3f6f7;
+  color: var(--admit-navy);
+}
+.admit-count-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.admit-count-copy {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 0 5px;
+}
+.admit-count-copy strong {
+  color: var(--admit-navy);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.admit-count-copy > span {
+  color: var(--admit-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.admit-count-copy small {
+  grid-column: 1 / -1;
+  color: var(--admit-muted);
+  font-size: 11px;
+}
+.admit-print-action {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 5px;
+}
+.dadmin .admit-print-button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--admit-navy);
+  box-shadow: 0 5px 12px rgba(23, 54, 80, 0.14);
+  font-size: 13px;
+}
+.dadmin .admit-print-button:hover {
+  background: #244d68;
+}
+.dadmin .admit-print-button:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.dadmin .admit-print-button .ic {
+  width: 17px;
+  height: 17px;
+}
+.admit-print-action small {
+  color: var(--admit-muted);
+  font-size: 10.5px;
+}
+.admit-preview-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 4px 0 -2px;
+}
+.admit-preview-copy h2 {
+  margin: 0;
+  color: var(--admit-navy);
+  font-size: 21px;
+  font-weight: 700;
+}
+.admit-preview-copy p {
+  margin: 4px 0 0;
+  color: var(--admit-muted);
+  font-size: 13px;
+}
+.admit-preview-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 9px 14px;
+  border: 1px solid #e3e7e9;
+  border-radius: 12px;
+  background: #fff;
+}
+.admit-preview-stats > div {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.admit-preview-stats strong {
+  color: var(--admit-navy);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.admit-preview-stats span {
+  color: var(--admit-muted);
+  font-size: 11px;
+}
+.admit-stat-divider {
+  width: 1px;
+  height: 22px;
+  background: #e3e7e9;
+}
+.admit-sheet {
+  display: grid;
+  gap: 20px;
+}
+.admit-print-page {
+  display: flex;
+  width: 100%;
+  max-width: 820px;
+  aspect-ratio: 210 / 297;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 22px;
+  border: 1px solid #e2e6e7;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(22, 44, 62, 0.08);
+}
+.admit-page-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #778594;
+  font-size: 11px;
+}
+.admit-page-grid {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+}
+.admit-page-grid-1 {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.admit-page-grid-2 {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+.admit-page-grid-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
 .admit-card {
-  border: 1.5px solid var(--p800, #123f66); border-radius: 10px; padding: 12px 14px;
-  background: #fff; font-size: 12.5px; line-height: 1.45;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 13px;
+  border: 1px solid #ddd8cc;
+  border-top: 4px solid var(--admit-navy);
+  border-radius: 11px;
+  background: #fffefa;
+  color: var(--admit-ink);
+  font-family:
+    var(--font-bengali-loaded), "Hind Siliguri", "Noto Sans Bengali", sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  box-shadow: 0 3px 10px rgba(23, 54, 80, 0.045);
 }
-.admit-head { display: flex; gap: 10px; align-items: center; }
-.admit-logo { width: 44px; height: 44px; object-fit: contain; }
-.admit-school h3 { margin: 0; font-size: 16.5px; color: var(--p800, #123f66); }
-.admit-school p { margin: 0; font-size: 11px; color: #444; }
+.admit-card-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.admit-school-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e5dcc9;
+  border-radius: 10px;
+  background: #faf7ef;
+  color: var(--admit-navy);
+}
+.admit-school-mark > svg {
+  width: 22px;
+  height: 22px;
+}
+.admit-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.admit-school {
+  min-width: 0;
+}
+.admit-school-overline {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--admit-gold);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+.admit-school h2 {
+  margin: 0;
+  color: var(--admit-navy);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.admit-school-en {
+  margin: 1px 0 0;
+  color: #516274;
+  font-size: 9px;
+  line-height: 1.3;
+}
+.admit-school-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 8px;
+  margin-top: 3px;
+  color: var(--admit-muted);
+  font-size: 8px;
+  line-height: 1.35;
+}
 .admit-band {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  margin: 8px 0; padding: 4px 10px; border-radius: 6px;
-  background: var(--p800, #123f66); color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 9px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: var(--admit-navy);
+  color: #fff;
 }
-.admit-band span { font-weight: 700; letter-spacing: .02em; }
-.admit-band b { font-weight: 600; font-size: 12px; text-align: right; }
-.admit-body { display: flex; gap: 12px; }
-.admit-info { border-collapse: collapse; flex: 1; }
-.admit-info th { text-align: left; font-weight: 600; padding: 1.5px 8px 1.5px 0; white-space: nowrap; color: #333; vertical-align: top; }
-.admit-info td { padding: 1.5px 0; }
+.admit-band-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.admit-band-label span {
+  color: #e3c996;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.admit-band-label strong {
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.admit-band-exam {
+  max-width: 55%;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: right;
+}
+.admit-identity-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+.admit-student-details {
+  min-width: 0;
+}
+.admit-student-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 6px;
+}
+.admit-student-name > span {
+  color: var(--admit-muted);
+  font-size: 8px;
+}
+.admit-student-name > strong {
+  color: var(--admit-navy);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.admit-student-name > small {
+  color: #586a79;
+  font-size: 9px;
+  line-height: 1.3;
+}
+.admit-info {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.admit-info th,
+.admit-info td {
+  padding: 3px 4px 3px 0;
+  border-bottom: 1px solid #eaedef;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.admit-info th {
+  width: 30%;
+  color: #687887;
+  font-size: 8px;
+  font-weight: 500;
+}
+.admit-info td {
+  color: #24394d;
+  font-size: 9px;
+  font-weight: 600;
+}
 .admit-photo {
-  width: 76px; height: 92px; flex: none; border: 1px solid #999; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center; color: #888; overflow: hidden;
+  display: flex;
+  width: 58px;
+  height: 72px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #d8d5ce;
+  border-radius: 6px;
+  background: #f8f6f0;
+  color: #8b8d8b;
+  font-size: 8px;
 }
-.admit-photo img { width: 100%; height: 100%; object-fit: cover; }
-.admit-subjects { margin-top: 7px; font-size: 11.5px; }
-.admit-note { margin: 7px 0 0; font-size: 10.5px; color: #555; }
-.admit-signs { display: flex; justify-content: space-between; margin-top: 26px; font-size: 11px; }
-.admit-signs span { border-top: 1px dotted #666; padding-top: 3px; }
-.admit-grid-1 .admit-card {
-  min-height: 270mm; padding: 18mm; font-size: 17px; line-height: 1.6;
+.admit-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.admit-grid-1 .admit-head { gap: 18px; }
-.admit-grid-1 .admit-logo { width: 72px; height: 72px; }
-.admit-grid-1 .admit-school h3 { font-size: 30px; }
-.admit-grid-1 .admit-school p { font-size: 15px; }
-.admit-grid-1 .admit-band { margin: 16px 0; padding: 9px 16px; }
-.admit-grid-1 .admit-band b { font-size: 17px; }
-.admit-grid-1 .admit-body { gap: 24px; }
-.admit-grid-1 .admit-info th { padding: 5px 14px 5px 0; }
-.admit-grid-1 .admit-info td { padding: 5px 0; }
-.admit-grid-1 .admit-photo { width: 128px; height: 156px; }
-.admit-grid-1 .admit-subjects { margin-top: 16px; font-size: 15px; }
-.admit-grid-1 .admit-note { margin-top: 16px; font-size: 14px; }
-.admit-grid-1 .admit-signs { margin-top: 56px; font-size: 14px; }
+.admit-subjects {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid var(--admit-line);
+}
+.admit-subjects strong,
+.admit-note strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--admit-navy);
+  font-size: 8px;
+  font-weight: 700;
+}
+.admit-subjects p {
+  margin: 0;
+  color: #4d5c69;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.admit-note {
+  margin-top: 7px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--admit-gold);
+  border-radius: 0 5px 5px 0;
+  background: #f8f5ed;
+}
+.admit-note p {
+  margin: 0;
+  color: #5d5b53;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.admit-signs {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: auto;
+  padding-top: 17px;
+}
+.admit-signs span {
+  min-width: 32%;
+  padding-top: 4px;
+  border-top: 1px solid #777;
+  color: #596675;
+  font-size: 8px;
+  text-align: center;
+}
+.admit-card-layout-1 {
+  padding: 22px;
+  font-size: 14px;
+}
+.admit-card-layout-1 .admit-card-header {
+  gap: 16px;
+}
+.admit-card-layout-1 .admit-school-mark {
+  width: 60px;
+  height: 60px;
+  border-radius: 13px;
+}
+.admit-card-layout-1 .admit-school-mark > svg {
+  width: 30px;
+  height: 30px;
+}
+.admit-card-layout-1 .admit-school-overline {
+  font-size: 9px;
+}
+.admit-card-layout-1 .admit-school h2 {
+  font-size: 23px;
+}
+.admit-card-layout-1 .admit-school-en {
+  font-size: 12px;
+}
+.admit-card-layout-1 .admit-school-meta {
+  font-size: 10px;
+}
+.admit-card-layout-1 .admit-band {
+  margin: 20px 0 16px;
+  padding: 12px 16px;
+}
+.admit-card-layout-1 .admit-band-label span {
+  font-size: 9px;
+}
+.admit-card-layout-1 .admit-band-label strong {
+  font-size: 18px;
+}
+.admit-card-layout-1 .admit-band-exam {
+  font-size: 14px;
+}
+.admit-card-layout-1 .admit-identity-layout {
+  gap: 18px;
+}
+.admit-card-layout-1 .admit-student-name {
+  margin-bottom: 12px;
+}
+.admit-card-layout-1 .admit-student-name > span {
+  font-size: 10px;
+}
+.admit-card-layout-1 .admit-student-name > strong {
+  font-size: 22px;
+}
+.admit-card-layout-1 .admit-student-name > small {
+  font-size: 12px;
+}
+.admit-card-layout-1 .admit-info th,
+.admit-card-layout-1 .admit-info td {
+  padding: 7px 8px 7px 0;
+}
+.admit-card-layout-1 .admit-info th {
+  font-size: 11px;
+}
+.admit-card-layout-1 .admit-info td {
+  font-size: 13px;
+}
+.admit-card-layout-1 .admit-photo {
+  width: 100px;
+  height: 124px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+.admit-card-layout-1 .admit-subjects {
+  margin-top: 16px;
+  padding-top: 12px;
+}
+.admit-card-layout-1 .admit-subjects strong,
+.admit-card-layout-1 .admit-note strong {
+  font-size: 11px;
+}
+.admit-card-layout-1 .admit-subjects p {
+  font-size: 11px;
+}
+.admit-card-layout-1 .admit-note {
+  margin-top: 14px;
+  padding: 10px 13px;
+}
+.admit-card-layout-1 .admit-note p {
+  font-size: 11px;
+}
+.admit-card-layout-1 .admit-signs {
+  padding-top: 48px;
+}
+.admit-card-layout-1 .admit-signs span {
+  font-size: 11px;
+}
+.admit-card-layout-2 {
+  padding: 14px;
+  font-size: 11px;
+}
+.admit-card-layout-2 .admit-school h2 {
+  font-size: 17px;
+}
+.admit-card-layout-2 .admit-student-name > strong {
+  font-size: 17px;
+}
+.admit-card-layout-2 .admit-photo {
+  width: 66px;
+  height: 82px;
+}
+.admit-card-layout-2 .admit-signs {
+  padding-top: 20px;
+}
+.admit-card-layout-4 {
+  padding: 9px;
+  font-size: 9px;
+}
+.admit-card-layout-4 .admit-card-header {
+  gap: 7px;
+}
+.admit-card-layout-4 .admit-school-mark {
+  width: 31px;
+  height: 31px;
+  border-radius: 7px;
+}
+.admit-card-layout-4 .admit-school-mark > svg {
+  width: 18px;
+  height: 18px;
+}
+.admit-card-layout-4 .admit-school-overline {
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-school h2 {
+  font-size: 11px;
+}
+.admit-card-layout-4 .admit-school-en {
+  font-size: 7px;
+}
+.admit-card-layout-4 .admit-school-meta {
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-band {
+  gap: 5px;
+  margin: 6px 0;
+  padding: 5px 7px;
+}
+.admit-card-layout-4 .admit-band-label span {
+  font-size: 5.5px;
+}
+.admit-card-layout-4 .admit-band-label strong {
+  font-size: 10px;
+}
+.admit-card-layout-4 .admit-band-exam {
+  font-size: 7px;
+}
+.admit-card-layout-4 .admit-identity-layout {
+  gap: 6px;
+}
+.admit-card-layout-4 .admit-student-name {
+  margin-bottom: 4px;
+}
+.admit-card-layout-4 .admit-student-name > span {
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-student-name > strong {
+  font-size: 11px;
+}
+.admit-card-layout-4 .admit-student-name > small {
+  font-size: 7px;
+}
+.admit-card-layout-4 .admit-info th,
+.admit-card-layout-4 .admit-info td {
+  padding: 2px 3px 2px 0;
+}
+.admit-card-layout-4 .admit-info th {
+  width: 33%;
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-info td {
+  font-size: 7px;
+}
+.admit-card-layout-4 .admit-photo {
+  width: 42px;
+  height: 54px;
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-subjects {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.admit-card-layout-4 .admit-subjects strong,
+.admit-card-layout-4 .admit-note strong {
+  font-size: 6px;
+}
+.admit-card-layout-4 .admit-subjects p,
+.admit-card-layout-4 .admit-note p {
+  font-size: 6px;
+  line-height: 1.35;
+}
+.admit-card-layout-4 .admit-note {
+  margin-top: 4px;
+  padding: 4px 5px;
+}
+.admit-card-layout-4 .admit-signs {
+  gap: 8px;
+  padding-top: 9px;
+}
+.admit-card-layout-4 .admit-signs span {
+  font-size: 6px;
+}
+.admit-empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 25px 28px;
+  border: 1px dashed #d8dfe2;
+  border-radius: 15px;
+  background: #fff;
+}
+.admit-empty-icon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 13px;
+  background: #f5f3ed;
+  color: var(--admit-gold);
+}
+.admit-empty-icon svg {
+  width: 21px;
+  height: 21px;
+}
+.admit-empty h2 {
+  margin: 0;
+  color: var(--admit-navy);
+  font-size: 16px;
+  font-weight: 700;
+}
+.admit-empty p {
+  margin: 4px 0 0;
+  color: var(--admit-muted);
+  font-size: 13px;
+}
+.admit-loading {
+  min-width: 0;
+}
+@media (max-width: 820px) {
+  .admit-hero {
+    align-items: flex-start;
+    padding: 24px;
+  }
+  .admit-format-badge {
+    margin-top: 4px;
+  }
+  .admit-config-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .admit-page {
+    gap: 16px;
+  }
+  .admit-hero {
+    min-height: 0;
+    gap: 13px;
+    padding: 21px 18px;
+    border-radius: 15px;
+  }
+  .admit-hero-icon {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .admit-hero-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .admit-hero-eyebrow {
+    font-size: 8px;
+  }
+  .admit-hero-copy h1 {
+    font-size: 23px;
+  }
+  .admit-hero-description {
+    font-size: 12px;
+  }
+  .admit-format-badge {
+    display: none;
+  }
+  .dadmin .admit-config-card > [data-slot="card-header"] {
+    padding: 17px 16px 14px;
+  }
+  .dadmin .admit-config-card > [data-slot="card-content"] {
+    padding: 17px 16px 19px;
+  }
+  .admit-config-icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+  .admit-config-title {
+    font-size: 17px;
+  }
+  .admit-config-description {
+    font-size: 11px;
+  }
+  .admit-ready-status {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+  .admit-ready-status svg {
+    width: 13px;
+    height: 13px;
+  }
+  .admit-config-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .admit-field-label {
+    font-size: 12px;
+  }
+  .admit-config-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .admit-print-action {
+    align-items: stretch;
+  }
+  .dadmin .admit-print-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .admit-print-action small {
+    text-align: center;
+  }
+  .admit-preview-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .admit-preview-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+  .admit-print-page {
+    aspect-ratio: auto;
+    min-height: 0;
+    padding: 12px;
+    border-radius: 11px;
+  }
+  .admit-page-grid-1,
+  .admit-page-grid-2,
+  .admit-page-grid-4 {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .admit-card-layout-1 {
+    min-height: 500px;
+  }
+  .admit-card-layout-2 {
+    min-height: 270px;
+  }
+  .admit-card-layout-4 {
+    min-height: 230px;
+  }
+  .admit-empty {
+    align-items: flex-start;
+    padding: 19px 16px;
+  }
+  .admit-empty p {
+    font-size: 12px;
+  }
+}
 .rich-editor {
   overflow: hidden;
   border: 1px solid #e5e7eb;
