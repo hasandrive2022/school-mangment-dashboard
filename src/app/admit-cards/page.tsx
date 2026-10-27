@@ -56,7 +56,7 @@ function AdmitCardsInner() {
   const [data, setData] = useState<AdmitData | null>(null);
   const [loading, setLoading] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("");
-  const [perPage, setPerPage] = useState("4");
+  const [perPage, setPerPage] = useState("1");
   const [instructions, setInstructions] = useState(DEFAULT_INSTRUCTIONS);
 
   useEffect(() => {
@@ -123,6 +123,7 @@ function AdmitCardsInner() {
               ))}
             </Select>
             <Select className="sel" value={perPage} onChange={(e) => setPerPage(e.target.value)}>
+              <option value="1">প্রতি পৃষ্ঠায় ১টি</option>
               <option value="2">প্রতি পৃষ্ঠায় ২টি</option>
               <option value="4">প্রতি পৃষ্ঠায় ৪টি</option>
             </Select>

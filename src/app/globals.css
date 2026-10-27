@@ -1211,9 +1211,20 @@ main.min-h-screen.bg-neutral-50 select {
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   body.printing-admit .admit-card { break-inside: avoid; }
+  body.printing-admit .admit-grid-1 {
+    position: static; width: auto; padding: 0; margin: 0; gap: 0;
+  }
+  body.printing-admit .admit-grid-1 .admit-card {
+    min-height: calc(297mm - 16mm); box-sizing: border-box;
+    break-after: page; page-break-after: always;
+  }
+  body.printing-admit .admit-grid-1 .admit-card:last-child {
+    break-after: auto; page-break-after: auto;
+  }
 }
 /* ---- Admit cards (প্রবেশপত্র) ---- */
 .admit-sheet { display: grid; gap: 14px; margin-top: 14px; }
+.admit-grid-1 { grid-template-columns: 1fr; }
 .admit-grid-2 { grid-template-columns: 1fr; }
 .admit-grid-4 { grid-template-columns: 1fr 1fr; }
 .admit-card {
@@ -1244,6 +1255,22 @@ main.min-h-screen.bg-neutral-50 select {
 .admit-note { margin: 7px 0 0; font-size: 10.5px; color: #555; }
 .admit-signs { display: flex; justify-content: space-between; margin-top: 26px; font-size: 11px; }
 .admit-signs span { border-top: 1px dotted #666; padding-top: 3px; }
+.admit-grid-1 .admit-card {
+  min-height: 270mm; padding: 18mm; font-size: 17px; line-height: 1.6;
+}
+.admit-grid-1 .admit-head { gap: 18px; }
+.admit-grid-1 .admit-logo { width: 72px; height: 72px; }
+.admit-grid-1 .admit-school h3 { font-size: 30px; }
+.admit-grid-1 .admit-school p { font-size: 15px; }
+.admit-grid-1 .admit-band { margin: 16px 0; padding: 9px 16px; }
+.admit-grid-1 .admit-band b { font-size: 17px; }
+.admit-grid-1 .admit-body { gap: 24px; }
+.admit-grid-1 .admit-info th { padding: 5px 14px 5px 0; }
+.admit-grid-1 .admit-info td { padding: 5px 0; }
+.admit-grid-1 .admit-photo { width: 128px; height: 156px; }
+.admit-grid-1 .admit-subjects { margin-top: 16px; font-size: 15px; }
+.admit-grid-1 .admit-note { margin-top: 16px; font-size: 14px; }
+.admit-grid-1 .admit-signs { margin-top: 56px; font-size: 14px; }
 .rich-editor {
   overflow: hidden;
   border: 1px solid #e5e7eb;
