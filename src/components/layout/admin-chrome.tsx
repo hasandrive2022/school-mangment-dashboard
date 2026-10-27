@@ -10,12 +10,13 @@ import {
   LayoutDashboard,
   Menu,
   MessageSquare,
+  X,
   Settings,
   Users,
   WalletCards,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { useAdminSWR } from "@/lib/swr";
@@ -125,7 +126,37 @@ function titleFor(pathname: string) {
 export function AdminChrome({ children }: Props) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarToggleRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
   const isShellless = pathname === "/login";
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      sidebarRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
+    });
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSidebarOpen(false);
+      if (window.matchMedia("(max-width: 820px)").matches) {
+        sidebarToggleRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [sidebarOpen]);
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      sidebarToggleRef.current?.focus();
+    }
+  };
   const { data: mePayload, isLoading: isMeLoading } = useAdminSWR<Me>(
     isShellless ? null : "/api/auth/me",
   );
@@ -134,8 +165,7 @@ export function AdminChrome({ children }: Props) {
   );
   const me = mePayload?.user;
   const schoolName = schoolPayload?.data?.school?.nameBn ?? "বিদ্যালয়";
-  if (pathname === "/login")
-    return <div className="dadmin">{children}</div>;
+  if (pathname === "/login") return <div className="dadmin">{children}</div>;
   if (isMeLoading || !me) {
     return (
       <div className="dadmin">
@@ -156,8 +186,20 @@ export function AdminChrome({ children }: Props) {
   const displayName = me?.displayNameBn || "স্বাগতম";
   return (
     <div className="dadmin">
+      {sidebarOpen ? (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="মেনু বন্ধ করুন"
+          onClick={closeSidebar}
+        />
+      ) : null}
       <div className="app full">
-        <aside className={`side${sidebarOpen ? " open" : ""}`}>
+        <aside
+          id="dashboard-navigation"
+          ref={sidebarRef}
+          className={`side${sidebarOpen ? " open" : ""}`}
+        >
           <div className="brand">
             <span className="logo">
               <GraduationCap className="ic lg" />
@@ -178,7 +220,8 @@ export function AdminChrome({ children }: Props) {
                     className={`mi${pathname === href ? " on" : ""}`}
                     href={href}
                     key={href}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={closeSidebar}
+                    aria-current={pathname === href ? "page" : undefined}
                   >
                     <Icon className="ic" />
                     {label}
@@ -199,11 +242,26 @@ export function AdminChrome({ children }: Props) {
         </aside>
         <div className="main">
           <header className="topbar">
-            <button type="button" className="ibtn dash-menu-btn" onClick={() => setSidebarOpen((value) => !value)} aria-label="মেনু খুলুন বা বন্ধ করুন">
-              <Menu className="ic sm" />
+            <button
+              ref={sidebarToggleRef}
+              id="dashboard-menu-toggle"
+              type="button"
+              className="ibtn dash-menu-btn"
+              aria-controls="dashboard-navigation"
+              aria-expanded={sidebarOpen}
+              aria-label={sidebarOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"}
+              onClick={() =>
+                sidebarOpen ? closeSidebar() : setSidebarOpen(true)
+              }
+            >
+              {sidebarOpen ? (
+                <X className="ic sm" />
+              ) : (
+                <Menu className="ic sm" />
+              )}
             </button>
             <span className="pt">{titleFor(pathname)}</span>
-            <span style={{ flex: 1 }} />
+            <span className="topbar-spacer" aria-hidden="true" />
             <div className="tuser">
               <span className="av">{displayName.slice(0, 1)}</span>
               <div>
