@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useToast } from "@/components/ui/toast";
-import { apiDelete, apiGet, apiPost } from "@/lib/admin-api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/admin-api";
 
 type Row = Record<string, unknown> & { id: string };
 
@@ -66,6 +66,26 @@ export default function AcademicsPage() {
     }
   }
 
+  async function setPair(row: Row, pairId: string) {
+    try {
+      const previousPairId = typeof row.pairSubjectId === "string" ? row.pairSubjectId : "";
+      await apiPatch(`/api/backend/academics/subjects/${row.id}`, { value: { pairSubjectId: pairId || null } }, "জোড়া সেট করা যায়নি");
+      if (previousPairId && previousPairId !== pairId) {
+        const previous = (rows ?? []).find((item) => item.id === previousPairId);
+        if (previous && previous.pairSubjectId === row.id) {
+          await apiPatch(`/api/backend/academics/subjects/${previous.id}`, { value: { pairSubjectId: null } }, "জোড়া সেট করা যায়নি");
+        }
+      }
+      if (pairId) {
+        await apiPatch(`/api/backend/academics/subjects/${pairId}`, { value: { pairSubjectId: row.id } }, "জোড়া সেট করা যায়নি");
+      }
+      toast.success(pairId ? "বিষয়ের জোড়া সেট হয়েছে — ফলাফল মিলিত নম্বরে হিসাব হবে" : "বিষয়ের জোড়া সরানো হয়েছে");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "জোড়া সেট করা যায়নি");
+    }
+  }
+
   const tabLabel = tabs.find(([key]) => key === tab)?.[1] ?? "";
 
   return (
@@ -120,6 +140,24 @@ export default function AcademicsPage() {
                   {row.year ? <span className="muted"> · {String(row.year)}</span> : null}
                 </div>
                 <span className="chip b">{tabLabel}</span>
+                {tab === "subjects" ? (
+                  <Select
+                    className="sel"
+                    style={{ width: 210 }}
+                    value={typeof row.pairSubjectId === "string" ? row.pairSubjectId : ""}
+                    onChange={(e) => void setPair(row, e.target.value)}
+                    title="যে বিষয়ের সাথে মিলিয়ে ফলাফল হিসাব হবে"
+                  >
+                    <option value="">জোড়া নেই (আলাদা হিসাব)</option>
+                    {(rows ?? [])
+                      .filter((item) => item.id !== row.id)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          জোড়া: {String(item.nameBn ?? item.id)}
+                        </option>
+                      ))}
+                  </Select>
+                ) : null}
                 <DeleteButton
                   itemLabel={label}
                   onDelete={() => apiDelete(`/api/backend/academics/${tab}/${row.id}`).then(() => undefined)}
