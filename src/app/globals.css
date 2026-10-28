@@ -2371,6 +2371,17 @@ main.min-h-screen.bg-neutral-50 select {
   font-size: 14px;
   font-weight: 600;
 }
+.password-field { position: relative; }
+.password-field .inp { padding-right: 46px; }
+.password-toggle {
+  position: absolute; top: 50%; right: 4px; min-width: 36px; width: 36px;
+  height: 36px; padding: 0; transform: translateY(-50%); color: var(--p700, #21699d);
+}
+.iconbox {
+  display: inline-flex; width: 42px; height: 42px; flex: none; align-items: center;
+  justify-content: center; border-radius: 12px; background: var(--p50, #eef6fc);
+  color: var(--p700, #21699d);
+}
 .routine-form {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
