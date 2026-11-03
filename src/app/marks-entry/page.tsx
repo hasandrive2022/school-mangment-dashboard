@@ -67,9 +67,10 @@ async function serverMessage(
   response: Response,
   fallback: string,
 ): Promise<string> {
-  const payload = (await response
-    .json()
-    .catch(() => null)) as { message?: string | string[]; error?: string } | null;
+  const payload = (await response.json().catch(() => null)) as {
+    message?: string | string[];
+    error?: string;
+  } | null;
   if (Array.isArray(payload?.message)) return payload.message.join(" ");
   return payload?.message ?? payload?.error ?? fallback;
 }
@@ -96,6 +97,31 @@ export default function MarksEntryPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [messageOk, setMessageOk] = useState(false);
+  const [sortBy, setSortBy] = useState<"roll" | "registration">(() =>
+    typeof window === "undefined"
+      ? "roll"
+      : ((localStorage.getItem("school-marks-sort") as
+          "roll" | "registration" | null) ?? "roll"),
+  );
+  const displayRows = useMemo(
+    () =>
+      [...rows].sort((a, b) =>
+        sortBy === "roll"
+          ? (a.roll ?? Number.MAX_SAFE_INTEGER) -
+              (b.roll ?? Number.MAX_SAFE_INTEGER) ||
+            a.nameBn.localeCompare(b.nameBn)
+          : String(a.registrationNumber ?? "").localeCompare(
+              String(b.registrationNumber ?? ""),
+              undefined,
+              { numeric: true },
+            ) || a.nameBn.localeCompare(b.nameBn),
+      ),
+    [rows, sortBy],
+  );
+  function changeSort(value: "roll" | "registration") {
+    setSortBy(value);
+    localStorage.setItem("school-marks-sort", value);
+  }
 
   const exams = useMemo(() => examsPayload?.data ?? [], [examsPayload]);
   const exam = useMemo(
@@ -113,7 +139,8 @@ export default function MarksEntryPage() {
     const mine = assignmentsPayload?.data ?? [];
     return all.filter((subject) =>
       mine.some(
-        (row) => row.subjectId === subject.subjectId && row.classId === exam.classId,
+        (row) =>
+          row.subjectId === subject.subjectId && row.classId === exam.classId,
       ),
     );
   }, [subjectsPayload, isTeacher, exam, assignmentsPayload]);
@@ -137,7 +164,10 @@ export default function MarksEntryPage() {
       if (!rosterResponse.ok) {
         setMessageOk(false);
         setMessage(
-          await serverMessage(rosterResponse, "শিক্ষার্থী তালিকা লোড করা যায়নি।"),
+          await serverMessage(
+            rosterResponse,
+            "শিক্ষার্থী তালিকা লোড করা যায়নি।",
+          ),
         );
         setRows([]);
         return;
@@ -269,7 +299,9 @@ export default function MarksEntryPage() {
   function totalOf(row: GridRow): number | null {
     if (row.isAbsent) return 0;
     if (row.cq === "" && row.mcq === "" && row.practical === "") return null;
-    return Number(row.cq || 0) + Number(row.mcq || 0) + Number(row.practical || 0);
+    return (
+      Number(row.cq || 0) + Number(row.mcq || 0) + Number(row.practical || 0)
+    );
   }
 
   return (
@@ -278,8 +310,8 @@ export default function MarksEntryPage() {
         <div>
           <h2 className="dpage-title">নম্বর এন্ট্রি</h2>
           <p className="cs">
-            পরীক্ষা ও বিষয় বেছে পুরো শ্রেণির নম্বর একসাথে বসান — মোট নম্বর
-            নিজে থেকেই হিসাব হয়।
+            পরীক্ষা ও বিষয় বেছে পুরো শ্রেণির নম্বর একসাথে বসান — মোট নম্বর নিজে
+            থেকেই হিসাব হয়।
           </p>
         </div>
       </div>
@@ -361,6 +393,24 @@ export default function MarksEntryPage() {
       </div>
 
       <div className="card flush">
+        <div className="rowflex" style={{ padding: "12px 18px" }}>
+          <span className="seg" aria-label="তালিকা সাজানো">
+            <button
+              type="button"
+              className={sortBy === "roll" ? "on-g" : ""}
+              onClick={() => changeSort("roll")}
+            >
+              রোল
+            </button>
+            <button
+              type="button"
+              className={sortBy === "registration" ? "on-g" : ""}
+              onClick={() => changeSort("registration")}
+            >
+              রেজিস্ট্রেশন
+            </button>
+          </span>
+        </div>
         <div className="tw">
           <table className="tbl">
             <thead>
@@ -371,11 +421,14 @@ export default function MarksEntryPage() {
                   সৃজনশীল{subject?.cqMarks ? ` (${bn(subject.cqMarks)})` : ""}
                 </th>
                 <th className="c">
-                  বহুনির্বাচনি{subject?.mcqMarks ? ` (${bn(subject.mcqMarks)})` : ""}
+                  বহুনির্বাচনি
+                  {subject?.mcqMarks ? ` (${bn(subject.mcqMarks)})` : ""}
                 </th>
                 <th className="c">
                   ব্যবহারিক
-                  {subject?.practicalMarks ? ` (${bn(subject.practicalMarks)})` : ""}
+                  {subject?.practicalMarks
+                    ? ` (${bn(subject.practicalMarks)})`
+                    : ""}
                 </th>
                 <th className="c">মোট</th>
                 <th className="c">অনুপস্থিত</th>
@@ -384,14 +437,19 @@ export default function MarksEntryPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {displayRows.map((row) => {
                 const total = totalOf(row);
                 return (
                   <tr key={row.studentId}>
-                    <td className="num">{row.roll != null ? bn(row.roll) : "—"}</td>
+                    <td className="num">
+                      {row.roll != null ? bn(row.roll) : "—"}
+                    </td>
                     <td>
                       <span className="b">{row.nameBn}</span>
-                      <span className="ds small muted" style={{ display: "block" }}>
+                      <span
+                        className="ds small muted"
+                        style={{ display: "block" }}
+                      >
                         রেজি: {bn(row.registrationNumber ?? "—")}
                       </span>
                       {row.rowMessage && (
@@ -418,13 +476,20 @@ export default function MarksEntryPage() {
                           {max ? (
                             <input
                               className="inp num"
-                              style={{ width: 84, height: 36, textAlign: "center" }}
+                              style={{
+                                width: 84,
+                                height: 36,
+                                textAlign: "center",
+                              }}
                               inputMode="numeric"
                               disabled={row.isLocked || row.isAbsent || busy}
                               value={row[field]}
                               onChange={(event) =>
                                 patchRow(row.studentId, {
-                                  [field]: event.target.value.replace(/[^0-9]/g, ""),
+                                  [field]: event.target.value.replace(
+                                    /[^0-9]/g,
+                                    "",
+                                  ),
                                 })
                               }
                             />
@@ -434,14 +499,18 @@ export default function MarksEntryPage() {
                         </td>
                       );
                     })}
-                    <td className="c b num">{total == null ? "—" : bn(total)}</td>
+                    <td className="c b num">
+                      {total == null ? "—" : bn(total)}
+                    </td>
                     <td className="c">
                       <input
                         type="checkbox"
                         disabled={row.isLocked || busy}
                         checked={row.isAbsent}
                         onChange={(event) =>
-                          patchRow(row.studentId, { isAbsent: event.target.checked })
+                          patchRow(row.studentId, {
+                            isAbsent: event.target.checked,
+                          })
                         }
                       />
                     </td>
@@ -480,7 +549,10 @@ export default function MarksEntryPage() {
         {rows.length > 0 && (
           <div
             className="rowflex"
-            style={{ padding: "14px 18px", borderTop: "1px solid var(--border)" }}
+            style={{
+              padding: "14px 18px",
+              borderTop: "1px solid var(--border)",
+            }}
           >
             <Button
               type="button"

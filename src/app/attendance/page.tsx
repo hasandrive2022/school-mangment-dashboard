@@ -37,9 +37,10 @@ async function serverMessage(
   response: Response,
   fallback: string,
 ): Promise<string> {
-  const payload = (await response
-    .json()
-    .catch(() => null)) as { message?: string | string[]; error?: string } | null;
+  const payload = (await response.json().catch(() => null)) as {
+    message?: string | string[];
+    error?: string;
+  } | null;
   if (Array.isArray(payload?.message)) return payload.message.join(" ");
   return payload?.message ?? payload?.error ?? fallback;
 }
@@ -85,6 +86,31 @@ export default function AttendancePage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [messageOk, setMessageOk] = useState(false);
+  const [sortBy, setSortBy] = useState<"roll" | "registration">(() =>
+    typeof window === "undefined"
+      ? "roll"
+      : ((localStorage.getItem("school-attendance-sort") as
+          "roll" | "registration" | null) ?? "roll"),
+  );
+  const displayRows = useMemo(
+    () =>
+      [...rows].sort((a, b) =>
+        sortBy === "roll"
+          ? (a.roll ?? Number.MAX_SAFE_INTEGER) -
+              (b.roll ?? Number.MAX_SAFE_INTEGER) ||
+            a.nameBn.localeCompare(b.nameBn)
+          : String(a.registrationNumber ?? "").localeCompare(
+              String(b.registrationNumber ?? ""),
+              undefined,
+              { numeric: true },
+            ) || a.nameBn.localeCompare(b.nameBn),
+      ),
+    [rows, sortBy],
+  );
+  function changeSort(value: "roll" | "registration") {
+    setSortBy(value);
+    localStorage.setItem("school-attendance-sort", value);
+  }
 
   const sectionOptions = useMemo<SectionRow[]>(() => {
     if (!classId) return [];
@@ -145,7 +171,10 @@ export default function AttendancePage() {
         data?: Omit<RosterRow, "status">[];
       };
       setRows(
-        (payload.data ?? []).map((row) => ({ ...row, status: "PRESENT" as Status })),
+        (payload.data ?? []).map((row) => ({
+          ...row,
+          status: "PRESENT" as Status,
+        })),
       );
       setLoaded(true);
     } finally {
@@ -172,9 +201,7 @@ export default function AttendancePage() {
       });
       if (!response.ok) {
         setMessageOk(false);
-        setMessage(
-          await serverMessage(response, "হাজিরা সংরক্ষণ করা যায়নি।"),
-        );
+        setMessage(await serverMessage(response, "হাজিরা সংরক্ষণ করা যায়নি।"));
         return;
       }
       setMessageOk(true);
@@ -202,9 +229,7 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {message && (
-        <p className={`alert ${messageOk ? "g" : "r"}`}>{message}</p>
-      )}
+      {message && <p className={`alert ${messageOk ? "g" : "r"}`}>{message}</p>}
 
       {noAssignments ? (
         <div className="card">
@@ -292,8 +317,28 @@ export default function AttendancePage() {
 
           {loaded && (
             <div className="rowflex">
-              <span className="chip g">উপস্থিত: {bnNum(counts.present)} জন</span>
-              <span className="chip r">অনুপস্থিত: {bnNum(counts.absent)} জন</span>
+              <span className="seg" aria-label="তালিকা সাজানো">
+                <button
+                  type="button"
+                  className={sortBy === "roll" ? "on-g" : ""}
+                  onClick={() => changeSort("roll")}
+                >
+                  রোল
+                </button>
+                <button
+                  type="button"
+                  className={sortBy === "registration" ? "on-g" : ""}
+                  onClick={() => changeSort("registration")}
+                >
+                  রেজিস্ট্রেশন
+                </button>
+              </span>
+              <span className="chip g">
+                উপস্থিত: {bnNum(counts.present)} জন
+              </span>
+              <span className="chip r">
+                অনুপস্থিত: {bnNum(counts.absent)} জন
+              </span>
               <span className="chip w">ছুটি: {bnNum(counts.leave)} জন</span>
               <span className="chip gr">মোট: {bnNum(rows.length)} জন</span>
               <span className="sp" style={{ flex: 1 }} />
@@ -302,7 +347,10 @@ export default function AttendancePage() {
                 className="btn sec sm"
                 onClick={() =>
                   setRows((items) =>
-                    items.map((item) => ({ ...item, status: "PRESENT" as Status })),
+                    items.map((item) => ({
+                      ...item,
+                      status: "PRESENT" as Status,
+                    })),
                   )
                 }
               >
@@ -323,13 +371,15 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
+                  {displayRows.map((row) => (
                     <tr key={row.id}>
                       <td className="num">
                         {row.roll != null ? bn(row.roll) : "—"}
                       </td>
                       <td className="b">{row.nameBn}</td>
-                      <td className="num">{bn(row.registrationNumber ?? "—")}</td>
+                      <td className="num">
+                        {bn(row.registrationNumber ?? "—")}
+                      </td>
                       <td className="r">
                         <span className="seg">
                           <button
@@ -370,11 +420,14 @@ export default function AttendancePage() {
             {rows.length > 0 && (
               <div
                 className="rowflex"
-                style={{ padding: "14px 18px", borderTop: "1px solid var(--border)" }}
+                style={{
+                  padding: "14px 18px",
+                  borderTop: "1px solid var(--border)",
+                }}
               >
                 <span className="small muted">
-                  জমা দিলে হাজিরা অ্যাডমিনের রিপোর্ট ও ছাত্র পোর্টালে সঙ্গে সঙ্গে
-                  দেখা যাবে।
+                  জমা দিলে হাজিরা অ্যাডমিনের রিপোর্ট ও ছাত্র পোর্টালে সঙ্গে
+                  সঙ্গে দেখা যাবে।
                 </span>
                 <span className="sp" style={{ flex: 1 }} />
                 <Button
