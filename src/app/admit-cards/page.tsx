@@ -36,6 +36,8 @@ type AdmitStudent = {
   groupName?: string | null;
   photoUrl?: string | null;
   fatherNameBn?: string | null;
+  seat?: { roomName?: string | null; building?: string | null; floor?: string | null; seatNo?: number | null; subjectNameBn?: string | null } | null;
+  seatPlans?: Array<{ roomName?: string | null; seatNo?: number | null; subjectNameBn?: string | null }>;
 };
 type AdmitData = {
   school?: {
@@ -465,6 +467,16 @@ function AdmitCardsInner() {
                                   {student.registrationNumber
                                     ? bn(student.registrationNumber)
                                     : "—"}
+                                </td>
+                              </tr>
+                              <tr>
+                                <th scope="row">আসন</th>
+                                <td>
+                                  {student.seat
+                                    ? `রুম ${student.seat.roomName ?? "—"}, সিট ${bn(student.seat.seatNo ?? 0)}`
+                                    : student.seatPlans?.length
+                                      ? student.seatPlans.map((seat) => `${seat.subjectNameBn ?? "বিষয়"}: ${seat.roomName ?? "—"}/${bn(seat.seatNo ?? 0)}`).join(" · ")
+                                      : "প্রকাশিত সিট প্ল্যান নেই"}
                                 </td>
                               </tr>
                               <tr>
