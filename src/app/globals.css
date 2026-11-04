@@ -2592,14 +2592,30 @@ main.min-h-screen.bg-neutral-50 select {
 .seat-empty { color: var(--muted-foreground); }
 .seat-print-sheet { display: none; }
 .seat-excluded-sheet { display: none; }
+.seat-summary-sheet { display: none; }
+.seat-summary-sheet h1, .seat-summary-sheet h2 { text-align: center; margin: 0 0 6px; }
+.seat-summary-sheet > p { text-align: center; }
+.seat-summary-sheet table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+.seat-summary-sheet th, .seat-summary-sheet td { border: 1px solid #222; padding: 8px; text-align: left; }
+.seat-summary-total th { font-weight: 700; }
+.seat-signature-line { display: block; margin-top: 16px; }
 .seat-chart-room { page-break-after: always; padding: 20mm; color: #111; }
 .seat-chart-room h2 { text-align: center; margin: 0; }
 .seat-chart-room > p { text-align: center; }
 .seat-chart-room table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 .seat-chart-room th, .seat-chart-room td { border: 1px solid #222; padding: 7px; text-align: left; }
 @media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  body { background: #fff !important; }
   body[data-seat-print] .no-seat-print { display: none !important; }
   body[data-seat-print] .seat-print-sheet { display: block !important; }
+  body[data-seat-print="chart"] .seat-summary-sheet,
+  body[data-seat-print="chart"] .seat-excluded-sheet { display: none !important; }
+  body[data-seat-print="summary"] .seat-chart-room,
+  body[data-seat-print="summary"] .seat-excluded-sheet { display: none !important; }
+  body[data-seat-print="summary"] .seat-summary-sheet { display: block !important; padding: 10mm; color: #111; }
+  body[data-seat-print="excluded"] .seat-chart-room,
+  body[data-seat-print="excluded"] .seat-summary-sheet { display: none !important; }
   body[data-seat-print="excluded"] .seat-chart-room { display: none; }
   body[data-seat-print="excluded"] .seat-excluded-sheet { display: block; padding: 20mm; color: #111; }
   body[data-seat-print="excluded"] .seat-excluded-sheet h2 { text-align: center; }

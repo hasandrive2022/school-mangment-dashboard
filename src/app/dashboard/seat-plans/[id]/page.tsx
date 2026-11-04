@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { RoomGraphic } from "@/components/seat-plans/room-graphic";
+import { bn, bnDate, bnNum, WEEKDAYS_BN } from "@/lib/format";
 
 type Row = Record<string, unknown> & {
   id: string;
@@ -28,8 +29,8 @@ const steps = [
 const reasonLabels: Record<string, string> = {
   fee_due: "ফি বকেয়া",
   not_failed: "ফেল নয়",
-  no_subject: "বিষয় নেই",
-  manual: "ম্যানুয়াল",
+  no_subject: "বিষয় বরাদ্দ নেই",
+  manual: "ম্যানুয়ালি বাদ দেওয়া হয়েছে",
 };
 const nested = (v: unknown): Row =>
   v && typeof v === "object" ? (v as Row) : { id: "" };
@@ -53,6 +54,7 @@ export default function SeatPlanDetail({
   const [perBench, setPerBench] = useState("1");
   const [registration, setRegistration] = useState("");
   const [message, setMessage] = useState("");
+  const [schoolName, setSchoolName] = useState("বিদ্যালয়");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
   const [candidateSort, setCandidateSort] = useState<"roll" | "registration">(
     () =>
@@ -67,17 +69,20 @@ export default function SeatPlanDetail({
   }, [params]);
   async function load() {
     if (!id) return;
-    const [d, c, r, x] = await Promise.all([
+    const [d, c, r, x, schoolResponse] = await Promise.all([
       fetch(`/api/backend/seat-plans/${id}`),
       fetch(`/api/backend/seat-plans/${id}/candidates`),
       fetch("/api/backend/rooms"),
       fetch(`/api/backend/seat-plans/${id}/excluded`),
+      fetch("/api/school-settings"),
     ]);
     const detailData = ((await d.json()) as { data?: Detail }).data ?? null;
     setDetail(detailData);
     setCandidates(((await c.json()) as { data?: Row[] }).data ?? []);
     setRooms(((await r.json()) as { data?: Row[] }).data ?? []);
     setExcluded(((await x.json()) as { data?: Row[] }).data ?? []);
+    const schoolPayload = (await schoolResponse.json()) as { data?: Row };
+    setSchoolName(String(schoolPayload.data?.nameBn ?? nested(schoolPayload.data?.school).nameBn ?? "বিদ্যালয়"));
     if (detailData?.rooms)
       setTeacherNames(
         Object.fromEntries(
@@ -95,6 +100,8 @@ export default function SeatPlanDetail({
     () => candidates.filter((c) => nested(c.candidate).status === "approved"),
     [candidates],
   );
+  const selectedBenchCount = useMemo(() => roomIds.reduce((sum, roomId) => { const room = rooms.find((item) => item.id === roomId); return sum + ((room?.layout as { benches: number }[] | undefined) ?? []).reduce((rowSum, row) => rowSum + Number(row.benches), 0); }, 0), [roomIds, rooms]);
+  const selectedCapacity = selectedBenchCount * Number(perBench);
   function changeCandidateSort(value: "roll" | "registration") {
     setCandidateSort(value);
     localStorage.setItem("seat-plan-candidate-sort", value);
@@ -170,8 +177,8 @@ export default function SeatPlanDetail({
   }
   function print(kind: "chart" | "summary" | "excluded") {
     document.body.dataset.seatPrint = kind;
-    window.print();
-    window.setTimeout(() => delete document.body.dataset.seatPrint, 250);
+    window.requestAnimationFrame(() => window.setTimeout(() => window.print(), 30));
+    window.addEventListener("afterprint", () => delete document.body.dataset.seatPrint, { once: true });
   }
   if (!detail)
     return (
@@ -376,6 +383,7 @@ export default function SeatPlanDetail({
                 >
                   <option value="roll_mix">রোল মিলিয়ে</option>
                   <option value="class_roll">ক্লাস ধরে রোল</option>
+                  <option value="reg_serial">রেজিস্ট্রেশন নম্বর ধরে</option>
                 </select>
               </label>
               <label>
@@ -393,8 +401,14 @@ export default function SeatPlanDetail({
                 >
                   <option value="1">১</option>
                   <option value="2">২</option>
+                  <option value="3">৩</option>
                 </select>
               </label>
+            </div>
+            <div className="seat-generation-summary mt-4">
+              <b>জেনারেশনের আগে ধারণক্ষমতা</b>
+              <p>অনুমোদিত শিক্ষার্থী: {bnNum(approved.length)} জন · নির্বাচিত রুমের মোট বেঞ্চ: {bnNum(selectedBenchCount)} টি · বসানো যাবে: {bnNum(selectedCapacity)} জন</p>
+              {selectedCapacity < approved.length && <p className="text-destructive">আসন ঘাটতি {bnNum(approved.length - selectedCapacity)} জন — রুম যোগ করুন বা প্রতি বেঞ্চ বাড়ান।</p>}
             </div>
             <Button className="mt-4" onClick={() => void generate()}>
               আসন জেনারেট
@@ -442,6 +456,18 @@ export default function SeatPlanDetail({
             </CardContent>
           </Card>
           <section className="seat-print-sheet">
+            <div className="seat-summary-sheet">
+              <h1>{schoolName}</h1>
+              <h2>সিট প্ল্যানের সারাংশ</h2>
+              <p>{String(detail.title)} · {bnDate(String(detail.sittingDate))} · {String(detail.shift)}</p>
+              <table>
+                <thead><tr><th>রুম</th><th>মোট আসন</th><th>বসানো হয়েছে</th><th>রোল পরিসর</th></tr></thead>
+                <tbody>
+                  {(detail.rooms ?? []).map((r) => { const room = nested(r.room); const link = nested(r.link); const assigned = (detail.assignments ?? []).filter((a) => String(nested(a.assignment).seatPlanRoomId) === String(link.id)); const rolls = assigned.map((a) => Number(nested(a.student).roll)).filter((roll) => Number.isFinite(roll) && roll > 0).sort((a, b) => a - b); const layout = (room.layout as { benches: number }[] | undefined) ?? []; const capacity = layout.reduce((sum, row) => sum + Number(row.benches), 0) * Number(detail.perBench ?? 1); return <tr key={String(link.id || room.id)}><td>{String(room.nameBn ?? "—")}</td><td>{bnNum(capacity)}</td><td>{bnNum(assigned.length)}</td><td>{rolls.length ? `${bn(rolls[0]!)}–${bn(rolls[rolls.length - 1]!)}` : "—"}</td></tr>; })}
+                  <tr className="seat-summary-total"><th>মোট</th><th>{bnNum((detail.rooms ?? []).reduce((sum, r) => { const room = nested(r.room); return sum + ((room.layout as { benches: number }[] | undefined) ?? []).reduce((n, row) => n + Number(row.benches), 0) * Number(detail.perBench ?? 1); }, 0))}</th><th>{bnNum(detail.assignments?.length ?? 0)}</th><th>—</th></tr>
+                </tbody>
+              </table>
+            </div>
             <div className="seat-excluded-sheet">
               <h2>বাদ-পড়া শিক্ষার্থীদের তালিকা</h2>
               <p>
@@ -452,17 +478,17 @@ export default function SeatPlanDetail({
                   <tr>
                     <th>নাম</th>
                     <th>রেজিস্ট্রেশন</th>
-                    <th>শ্রেণি/শাখা</th>
+                    <th>শ্রেণি/শাখা/গ্রুপ</th>
                     <th>কারণ</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {excluded.map((c) => (
+                  {excluded.length ? excluded.map((c) => (
                     <tr key={c.id}>
                       <td>{String(c.name ?? "—")}</td>
                       <td>{String(c.registrationNumber ?? "—")}</td>
                       <td>
-                        {[c.classNameBn, c.sectionNameBn]
+                        {[c.classNameBn, c.sectionNameBn, c.groupName]
                           .filter(Boolean)
                           .join(" / ") || "—"}
                       </td>
@@ -472,7 +498,7 @@ export default function SeatPlanDetail({
                         ] ?? "বাদ"}
                       </td>
                     </tr>
-                  ))}
+                  )) : <tr><td colSpan={4}>কেউ বাদ পড়েনি</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -484,15 +510,15 @@ export default function SeatPlanDetail({
                   className="seat-chart-room"
                   key={String(link.id || room.id)}
                 >
+                  <h1>{schoolName}</h1>
                   <h2>আসন বিন্যাস — {String(room.nameBn ?? "রুম")}</h2>
-                  <p>
-                    {String(detail.sittingDate)} · {String(detail.title)}
-                  </p>
+                  <p className="seat-print-date">{bnDate(String(detail.sittingDate))} · {WEEKDAYS_BN[new Date(`${String(detail.sittingDate)}T00:00:00`).getDay()]} · {String(detail.title)}</p>
+                  <p>{[room.building, room.floor].filter(Boolean).join(" / ") || ""} · {(detail.subjects ?? []).map((subject) => String(subject.subjectNameBn ?? "বিষয়")).join(" / ")}</p>
                   <RoomGraphic onBenchClick={(assignment) => void selectGraphicSeat(assignment)} layout={(room.layout as { benches: number }[] | undefined) ?? []} assignments={(detail.assignments ?? []).filter((a) => String(a.roomName) === String(room.nameBn)).map((a) => { const assignment = nested(a.assignment); const student = nested(a.student); return { id: String(assignment.id), seatNo: Number(assignment.seatNo), benchRow: Number(assignment.benchRow), benchColumn: Number(assignment.benchColumn), benchSlot: Number(assignment.benchSlot), name: String(a.name ?? ""), roll: student.roll == null ? null : Number(student.roll), groupName: a.groupName == null ? null : String(a.groupName) }; })} />
                   <table>
                     <thead>
                       <tr>
-                        <th>সিট নম্বর</th>
+                        <th>সিট নং / বেঞ্চ অবস্থান</th>
                         <th>রোল</th>
                         <th>শিক্ষার্থীর নাম</th>
                         <th>রেজিস্ট্রেশন নম্বর</th>
@@ -509,19 +535,19 @@ export default function SeatPlanDetail({
                           const student = nested(a.student);
                           return (
                             <tr key={assignment.id || a.id}>
-                              <td>{String(assignment.seatNo ?? "—")}</td>
-                              <td>{String(student.roll ?? "—")}</td>
+                              <td>{bn(String(assignment.seatNo ?? "—"))}{assignment.benchPosition ? ` · ${assignment.benchPosition === "left" ? "বাম" : assignment.benchPosition === "middle" ? "মাঝ" : "ডান"}` : ""}</td>
+                              <td>{student.roll == null ? "—" : bn(String(student.roll))}</td>
                               <td>{String(a.name ?? "—")}</td>
-                              <td>{String(a.registrationNumber ?? "—")}</td>
-                              <td>{String(a.groupName ?? "—")}</td>
+                              <td>{a.registrationNumber == null ? "—" : bn(String(a.registrationNumber))}</td>
+                              <td>{[a.classNameBn, a.sectionNameBn, a.groupName].filter(Boolean).join(" / ") || "—"}</td>
                             </tr>
                           );
                         })}
                     </tbody>
                   </table>
                   <p>
-                    কক্ষের দায়িত্বপ্রাপ্ত শিক্ষকের নাম:{" "}
-                    {String(link.roomTeacherName ?? "____________________")}
+                    দায়িত্বপ্রাপ্ত শিক্ষকের নাম: {String(link.roomTeacherName || "____________________________")}
+                    <span className="seat-signature-line">স্বাক্ষর: ____________________</span>
                   </p>
                 </article>
               );
