@@ -2590,6 +2590,23 @@ main.min-h-screen.bg-neutral-50 select {
 .seat-bench:hover, .seat-bench-highlight { border-color: var(--primary); box-shadow: 0 0 0 2px var(--ring); }
 .seat-bench-number { font-size: 11px; color: var(--muted-foreground); }
 .seat-empty { color: var(--muted-foreground); }
+.ephemeral-print { display: none; }
+.ephemeral-board { border: 1px solid var(--primary); text-align: center; padding: 6px; margin: 10px 0; font-weight: 700; }
+.ephemeral-print-room, .ephemeral-print-summary { color: #111; page-break-after: always; padding: 8mm; }
+.ephemeral-print-header { text-align: center; }
+.ephemeral-print-header h1, .ephemeral-print-header h2, .ephemeral-print-header p { margin: 4px; }
+.ephemeral-date { font-size: 22px; font-weight: 700; }
+.ephemeral-print table { width: 100%; border-collapse: collapse; }
+.ephemeral-print th, .ephemeral-print td { border: 1px solid #222; padding: 8px; text-align: center; }
+.ephemeral-print-room td { height: 48px; font-size: 20px; font-weight: 700; }
+.ephemeral-seat-number + .ephemeral-seat-number { border-left: 1px solid #222; padding-left: 8px; margin-left: 8px; }
+.ephemeral-print-summary { page-break-after: auto; }
+.seat-ephemeral-form { display: grid; gap: 18px; }
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  body[data-ephemeral-seat-print] .ephemeral-no-print { display: none !important; }
+  body[data-ephemeral-seat-print] .ephemeral-print { display: block !important; }
+}
 .seat-section-tree { display: grid; gap: 12px; margin: 16px 0; max-height: 420px; overflow: auto; }
 .seat-class-tree { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
 .seat-section-option { display: flex; gap: 8px; align-items: center; margin-top: 8px; padding-left: 14px; }
