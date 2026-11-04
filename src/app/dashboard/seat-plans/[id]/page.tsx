@@ -19,6 +19,8 @@ type Row = Record<string, unknown> & {
   link?: Row;
 };
 type Detail = Row & { subjects?: Row[]; rooms?: Row[]; assignments?: Row[] };
+type AcademicClass = Row & { nameBn?: string; orderIndex?: number };
+type AcademicSection = Row & { classId?: string; nameBn?: string; groupName?: string | null };
 const steps = [
   "পরীক্ষা ও বিষয়",
   "ক্লাস ও গ্রুপ",
@@ -46,6 +48,10 @@ export default function SeatPlanDetail({
   const [candidates, setCandidates] = useState<Row[]>([]);
   const [excluded, setExcluded] = useState<Row[]>([]);
   const [rooms, setRooms] = useState<Row[]>([]);
+  const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
+  const [academicSections, setAcademicSections] = useState<AcademicSection[]>([]);
+  const [sectionCounts, setSectionCounts] = useState<Record<string, number>>({});
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [roomIds, setRoomIds] = useState<string[]>([]);
   const [teacherNames, setTeacherNames] = useState<Record<string, string>>({});
@@ -69,18 +75,27 @@ export default function SeatPlanDetail({
   }, [params]);
   async function load() {
     if (!id) return;
-    const [d, c, r, x, schoolResponse] = await Promise.all([
+    const [d, c, r, x, schoolResponse, classResponse, sectionResponse, studentResponse] = await Promise.all([
       fetch(`/api/backend/seat-plans/${id}`),
       fetch(`/api/backend/seat-plans/${id}/candidates`),
       fetch("/api/backend/rooms"),
       fetch(`/api/backend/seat-plans/${id}/excluded`),
       fetch("/api/school-settings"),
+      fetch("/api/backend/academics/classes"),
+      fetch("/api/backend/academics/sections"),
+      fetch("/api/backend/people/students"),
     ]);
     const detailData = ((await d.json()) as { data?: Detail }).data ?? null;
     setDetail(detailData);
     setCandidates(((await c.json()) as { data?: Row[] }).data ?? []);
     setRooms(((await r.json()) as { data?: Row[] }).data ?? []);
     setExcluded(((await x.json()) as { data?: Row[] }).data ?? []);
+    setAcademicClasses(((await classResponse.json()) as { data?: AcademicClass[] }).data ?? []);
+    const sectionRows = ((await sectionResponse.json()) as { data?: AcademicSection[] }).data ?? [];
+    setAcademicSections(sectionRows);
+    const studentRows = ((await studentResponse.json()) as { data?: Row[] }).data ?? [];
+    setSectionCounts(studentRows.reduce<Record<string, number>>((counts, student) => { const sectionId = String(student.sectionId ?? ""); if (sectionId) counts[sectionId] = (counts[sectionId] ?? 0) + 1; return counts; }, {}));
+    if (Array.isArray(detailData?.selectedSections)) setSelectedSections(detailData.selectedSections.map(String));
     const schoolPayload = (await schoolResponse.json()) as { data?: Row };
     setSchoolName(String(schoolPayload.data?.nameBn ?? nested(schoolPayload.data?.school).nameBn ?? "বিদ্যালয়"));
     if (detailData?.rooms)
@@ -130,6 +145,12 @@ export default function SeatPlanDetail({
     );
     setRegistration("");
     await load();
+  }
+  async function saveSelection() {
+    const response = await fetch(`/api/backend/seat-plans/${id}/selection`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ selectedSectionIds: selectedSections }) });
+    const payload = (await response.json()) as { message?: string };
+    setMessage(response.ok ? "ক্লাস ও গ্রুপ সংরক্ষণ হয়েছে; প্রার্থী তালিকা আপডেট হয়েছে" : (payload.message ?? "ক্লাস/গ্রুপ সংরক্ষণ করা যায়নি"));
+    if (response.ok) { await load(); setStep(2); }
   }
   async function excludeSelected() {
     if (!selected.length) return;
@@ -242,11 +263,14 @@ export default function SeatPlanDetail({
             <CardTitle>ক্লাস ও গ্রুপ</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>
-              নির্বাচিত শাখা থেকে প্রার্থী তালিকা তৈরি হয়েছে। প্রতিটি প্রার্থীর
-              শ্রেণি, শাখা ও গ্রুপ ধাপ ৩-এ যাচাই করুন।
-            </p>
-            <Button onClick={() => setStep(2)}>পরবর্তী</Button>
+            <p>পরীক্ষায় অংশ নেওয়া ক্লাস ও শাখা/গ্রুপ নির্বাচন করুন। শিক্ষার্থী সংখ্যা বন্ধনীর মধ্যে দেখানো হয়েছে।</p>
+            <div className="seat-section-tree">
+              {academicClasses.sort((a, b) => Number(a.orderIndex ?? 0) - Number(b.orderIndex ?? 0)).map((academicClass) => {
+                const classSections = academicSections.filter((section) => String(section.classId) === String(academicClass.id));
+                return <div className="seat-class-tree" key={academicClass.id}><b>শ্রেণি {String(academicClass.nameBn ?? "—")}</b>{classSections.map((section) => <label className="seat-section-option" key={section.id}><input type="checkbox" checked={selectedSections.includes(section.id)} onChange={() => setSelectedSections((current) => current.includes(section.id) ? current.filter((id) => id !== section.id) : [...current, section.id])} /><span>{String(section.nameBn ?? "শাখা")}{section.groupName ? ` — ${section.groupName}` : ""} ({sectionCounts[section.id] ?? 0} জন)</span></label>)}</div>;
+              })}
+            </div>
+            <Button onClick={() => void saveSelection()}>সংরক্ষণ করে পরবর্তী</Button>
           </CardContent>
         </Card>
       )}
@@ -471,7 +495,7 @@ export default function SeatPlanDetail({
             <div className="seat-excluded-sheet">
               <h2>বাদ-পড়া শিক্ষার্থীদের তালিকা</h2>
               <p>
-                {String(detail.title)} · {String(detail.sittingDate)}
+                {String(detail.title)} · {bnDate(String(detail.sittingDate))}
               </p>
               <table>
                 <thead>
