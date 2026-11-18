@@ -2029,13 +2029,47 @@ main.min-h-screen.bg-neutral-50 select {
   margin-top: auto;
   padding-top: 17px;
 }
-.admit-signs span {
-  min-width: 32%;
-  padding-top: 4px;
-  border-top: 1px solid #777;
+.admit-signature-item {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
   color: #596675;
-  font-size: 8px;
   text-align: center;
+}
+.admit-signature-mark {
+  display: flex;
+  width: 100%;
+  height: 34px;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #b79a5b;
+}
+.admit-signature-mark img {
+  display: block;
+  width: min(100%, 112px);
+  height: 30px;
+  margin: 0 0 2px;
+  object-fit: contain;
+}
+.admit-signature-mark > span {
+  padding-bottom: 4px;
+  color: #87909a;
+  font-size: 7px;
+}
+.admit-signature-item b,
+.admit-signature-item small {
+  display: block;
+}
+.admit-signature-item b {
+  font-size: 8px;
+}
+.admit-signature-item small {
+  margin-top: 3px;
+  color: #7a838c;
+  font-size: 7px;
 }
 .admit-card-layout-1 {
   padding: 22px;
@@ -2130,8 +2164,17 @@ main.min-h-screen.bg-neutral-50 select {
 .admit-card-layout-1 .admit-signs {
   padding-top: 48px;
 }
-.admit-card-layout-1 .admit-signs span {
+.admit-card-layout-1 .admit-signature-mark {
+  height: 42px;
+}
+.admit-card-layout-1 .admit-signature-mark img {
+  height: 36px;
+}
+.admit-card-layout-1 .admit-signature-item b {
   font-size: 11px;
+}
+.admit-card-layout-1 .admit-signature-item small {
+  font-size: 9px;
 }
 .admit-signature-setup {
   display: grid;
@@ -2144,9 +2187,6 @@ main.min-h-screen.bg-neutral-50 select {
   border-radius: 12px;
   background: var(--p50, #f5f9fc);
 }
-.admit-signs img { display: block; width: 92px; height: 30px; object-fit: contain; margin: -34px auto 5px; }
-.admit-signs b, .admit-signs small { display: block; }
-.admit-signs small { margin-top: 3px; }
 @media (max-width: 700px) { .admit-signature-setup { grid-template-columns: 1fr; } }
 .admit-card-layout-2 {
   padding: 14px;
@@ -2259,8 +2299,23 @@ main.min-h-screen.bg-neutral-50 select {
   gap: 8px;
   padding-top: 9px;
 }
-.admit-card-layout-4 .admit-signs span {
+.admit-card-layout-4 .admit-signature-mark {
+  height: 23px;
+  margin-bottom: 3px;
+}
+.admit-card-layout-4 .admit-signature-mark img {
+  width: min(100%, 56px);
+  height: 20px;
+}
+.admit-card-layout-4 .admit-signature-mark > span {
+  padding-bottom: 2px;
+  font-size: 5px;
+}
+.admit-card-layout-4 .admit-signature-item b {
   font-size: 6px;
+}
+.admit-card-layout-4 .admit-signature-item small {
+  font-size: 5px;
 }
 .admit-empty {
   display: flex;
@@ -2756,19 +2811,30 @@ main.min-h-screen.bg-neutral-50 select {
 .marksheet-signatures {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px;
+  gap: 16px;
   margin-top: auto;
-  padding: 26px 4px 0;
+  padding: 22px 4px 0;
 }
 .marksheet-signatures > div {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
+  padding: 9px 8px 8px;
+  border: 1px solid var(--marksheet-line);
+  border-radius: 7px;
+  background: #fcfcfa;
   text-align: center;
 }
-.marksheet-signatures > div > span {
-  height: 24px;
-  border-bottom: 1px solid #7a858a;
+.marksheet-signatures small {
+  color: #a58142;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.marksheet-signatures .marksheet-signature-space {
+  height: 25px;
+  border-bottom: 1px solid #8a9294;
 }
 .marksheet-signatures strong {
   color: var(--marksheet-muted);
@@ -2851,7 +2917,19 @@ main.min-h-screen.bg-neutral-50 select {
     padding: 8px 5px;
   }
   .marksheet-signatures {
-    gap: 12px;
+    gap: 8px;
+    padding-right: 0;
+    padding-left: 0;
+  }
+  .marksheet-signatures > div {
+    padding: 8px 4px 7px;
+  }
+  .marksheet-signatures small {
+    font-size: 6px;
+    letter-spacing: 0.08em;
+  }
+  .marksheet-signatures strong {
+    font-size: 8px;
   }
   .marksheet-footer-note {
     align-items: flex-start;

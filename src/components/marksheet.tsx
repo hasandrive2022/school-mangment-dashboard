@@ -280,15 +280,18 @@ export function MarksheetSheet({ data }: { data: MarksheetData }) {
 
       <footer className="marksheet-signatures">
         <div>
-          <span />
+          <small>CLASS TEACHER</small>
+          <span className="marksheet-signature-space" aria-hidden="true" />
           <strong>শ্রেণি শিক্ষকের স্বাক্ষর</strong>
         </div>
         <div>
-          <span />
+          <small>EXAM CONTROLLER</small>
+          <span className="marksheet-signature-space" aria-hidden="true" />
           <strong>পরীক্ষা নিয়ন্ত্রক</strong>
         </div>
         <div>
-          <span />
+          <small>HEAD TEACHER</small>
+          <span className="marksheet-signature-space" aria-hidden="true" />
           <strong>প্রধান শিক্ষকের স্বাক্ষর ও সিল</strong>
         </div>
       </footer>
