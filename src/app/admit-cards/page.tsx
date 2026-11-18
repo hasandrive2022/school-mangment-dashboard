@@ -140,6 +140,8 @@ function AdmitCardsInner() {
   };
   useEffect(() => {
     if (!data) return;
+    // Hydrate editable signature fields when the selected exam data arrives.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeadteacherSignatureUrl(data.exam.headteacherSignatureUrl ?? "");
     setPreparedBySignatureUrl(data.exam.preparedBySignatureUrl ?? "");
     setPreparedByTeacherId(data.exam.preparedByTeacherId ?? "");
@@ -535,7 +537,7 @@ function AdmitCardsInner() {
                                 </td>
                               </tr>
                               <tr>
-                                <th scope="row">আসন</th>
+                                <th scope="row">কক্ষ / আসন</th>
                                 <td>
                                   {student.seat
                                     ? `রুম ${student.seat.roomName ?? "—"}, সিট ${bn(student.seat.seatNo ?? 0)}`
@@ -556,10 +558,6 @@ function AdmitCardsInner() {
                                   <td>{period}</td>
                                 </tr>
                               ) : null}
-                              <tr>
-                                <th scope="row">আসন / কক্ষ</th>
-                                <td>……………………</td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>

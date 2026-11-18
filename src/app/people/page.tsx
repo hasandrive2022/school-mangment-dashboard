@@ -32,6 +32,7 @@ import {
   MarksheetSheet,
   printMarksheetSheet,
 } from "@/components/marksheet";
+import { useAdminSWR } from "@/lib/swr";
 
 type Row = Record<string, unknown> & { id: string };
 
@@ -86,9 +87,18 @@ type StudentResult = {
     id: string;
     nameBn?: string;
     isPublished?: boolean;
+    headteacherSignatureUrl?: string | null;
+    preparedByTeacherNameBn?: string | null;
+    preparedBySignatureUrl?: string | null;
   };
   sessionName?: string | null;
   subjects: ResultSubject[];
+};
+
+type ExamSignatureDetails = {
+  headteacherSignatureUrl?: string | null;
+  preparedByTeacherNameBn?: string | null;
+  preparedBySignatureUrl?: string | null;
 };
 
 type AttendanceSummary = {
@@ -268,6 +278,18 @@ export default function PeoplePage() {
   const [sections, setSections] = useState<Row[]>([]);
   const [subjects, setSubjects] = useState<Row[]>([]);
   const [teachers, setTeachers] = useState<Row[]>([]);
+  const expandedResult = results?.find(
+    (entry) => entry.result.id === expandedExam,
+  );
+  const examDetailsKey =
+    profileTab === "results" && expandedResult?.exam.id
+      ? `/api/backend/results/exams/${encodeURIComponent(expandedResult.exam.id)}`
+      : null;
+  const { data: examDetailsPayload, isLoading: isLoadingExamDetails } =
+    useAdminSWR<{ data?: ExamSignatureDetails | null } & ExamSignatureDetails>(
+      examDetailsKey,
+    );
+  const examSignatures = examDetailsPayload?.data ?? examDetailsPayload;
 
   async function loadRows() {
     setRows(null);
@@ -1607,6 +1629,7 @@ export default function PeoplePage() {
                           className="btn gho sm marksheet-print-button"
                           disabled={
                             printingMarksheetId !== null ||
+                            isLoadingExamDetails ||
                             entry.subjects.length === 0
                           }
                           onClick={() => void printStudentMarksheet(entry.result.id)}
@@ -1647,6 +1670,15 @@ export default function PeoplePage() {
                             exam: {
                               nameBn: entry.exam.nameBn ?? "পরীক্ষা",
                               isPublished: entry.exam.isPublished,
+                              headteacherSignatureUrl:
+                                examSignatures?.headteacherSignatureUrl ??
+                                entry.exam.headteacherSignatureUrl,
+                              preparedByTeacherNameBn:
+                                examSignatures?.preparedByTeacherNameBn ??
+                                entry.exam.preparedByTeacherNameBn,
+                              preparedBySignatureUrl:
+                                examSignatures?.preparedBySignatureUrl ??
+                                entry.exam.preparedBySignatureUrl,
                             },
                             result: entry.result,
                             subjects: entry.subjects,
