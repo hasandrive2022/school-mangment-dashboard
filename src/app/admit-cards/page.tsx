@@ -61,7 +61,7 @@ type AdmitData = {
     preparedBySignatureUrl?: string | null;
   };
   classNameBn: string;
-  subjects: Array<{ code?: string | null; nameBn: string }>;
+  subjects: Array<{ code?: string | null; nameBn: string; examDate?: string | null; startsAt?: string | null; endsAt?: string | null }>;
   students: AdmitStudent[];
 };
 
@@ -555,15 +555,10 @@ function AdmitCardsInner() {
 
                       {(data.subjects ?? []).length ? (
                         <div className="admit-subjects">
-                          <strong>বিষয়সমূহ</strong>
-                          <p>
-                            {data.subjects
-                              .map(
-                                (subject) =>
-                                  `${subject.nameBn}${subject.code ? ` (${bn(subject.code)})` : ""}`,
-                              )
-                              .join(" · ")}
-                          </p>
+                          <strong>পরীক্ষার রুটিন</strong>
+                          <table className="admit-routine-table"><thead><tr><th>বিষয়</th><th>তারিখ</th><th>সময়</th></tr></thead><tbody>
+                            {data.subjects.map((subject) => <tr key={`${subject.code ?? subject.nameBn}-${subject.examDate}`}><td>{subject.nameBn}{subject.code ? ` (${bn(subject.code)})` : ""}</td><td>{subject.examDate ? bn(subject.examDate) : "—"}</td><td>{subject.startsAt && subject.endsAt ? `${subject.startsAt} — ${subject.endsAt}` : "—"}</td></tr>)}
+                          </tbody></table>
                         </div>
                       ) : null}
 

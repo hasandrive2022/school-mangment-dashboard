@@ -2256,6 +2256,9 @@ main.min-h-screen.bg-neutral-50 select {
   border-radius: 12px;
   background: var(--p50, #f5f9fc);
 }
+.admit-routine-table { width:100%; margin-top:8px; border-collapse:collapse; font-size:11px; }
+.admit-routine-table th, .admit-routine-table td { border:1px solid #cbd8e3; padding:4px 6px; text-align:left; }
+.admit-routine-table th { background:#edf4f9; font-weight:700; }
 @media (max-width: 700px) { .admit-signature-setup { grid-template-columns: 1fr; } }
 .admit-card-layout-2 {
   padding: 14px;

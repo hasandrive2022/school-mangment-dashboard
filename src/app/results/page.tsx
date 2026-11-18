@@ -40,6 +40,9 @@ type ExamSubject = {
   cqMarks?: number;
   mcqMarks?: number;
   practicalMarks?: number;
+  examDate?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
 };
 type SubjectOption = { id: string; nameBn?: string };
 type AcademicOption = { id: string; nameBn?: string; name?: string; year?: number };
@@ -60,6 +63,9 @@ export default function ResultsPage() {
     cqMarks: "",
     mcqMarks: "",
     practicalMarks: "",
+    examDate: "",
+    startsAt: "",
+    endsAt: "",
   });
   const [form, setForm] = useState({
     nameBn: "",
@@ -107,11 +113,14 @@ export default function ResultsPage() {
           cqMarks: examSubjectForm.cqMarks ? Number(examSubjectForm.cqMarks) : undefined,
           mcqMarks: examSubjectForm.mcqMarks ? Number(examSubjectForm.mcqMarks) : undefined,
           practicalMarks: examSubjectForm.practicalMarks ? Number(examSubjectForm.practicalMarks) : undefined,
+          examDate: examSubjectForm.examDate,
+          startsAt: examSubjectForm.startsAt,
+          endsAt: examSubjectForm.endsAt,
         },
         "পরীক্ষার বিষয় যোগ করা যায়নি",
       );
       toast.success("পরীক্ষার বিষয় যোগ হয়েছে");
-      setExamSubjectForm({ subjectId: "", fullMarks: "", passMarks: "", cqMarks: "", mcqMarks: "", practicalMarks: "" });
+      setExamSubjectForm({ subjectId: "", fullMarks: "", passMarks: "", cqMarks: "", mcqMarks: "", practicalMarks: "", examDate: "", startsAt: "", endsAt: "" });
       await loadExamSubjects(examSubjectExamId);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "যোগ করা যায়নি");
@@ -368,6 +377,9 @@ export default function ResultsPage() {
                       <Input className="inp" type="number" placeholder="CQ" value={examSubjectForm.cqMarks} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, cqMarks: e.target.value })} />
                       <Input className="inp" type="number" placeholder="MCQ" value={examSubjectForm.mcqMarks} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, mcqMarks: e.target.value })} />
                       <Input className="inp" type="number" placeholder="ব্যবহারিক" value={examSubjectForm.practicalMarks} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, practicalMarks: e.target.value })} />
+                      <Input className="inp" type="date" aria-label="পরীক্ষার তারিখ" value={examSubjectForm.examDate} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, examDate: e.target.value })} />
+                      <Input className="inp" type="time" aria-label="শুরুর সময়" value={examSubjectForm.startsAt} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, startsAt: e.target.value })} />
+                      <Input className="inp" type="time" aria-label="শেষ সময়" value={examSubjectForm.endsAt} onChange={(e) => setExamSubjectForm({ ...examSubjectForm, endsAt: e.target.value })} />
                       <Button className="btn" onClick={() => void addExamSubject()}>বিষয় যোগ</Button>
                     </div>
                     {examSubjects === null ? (
@@ -384,6 +396,7 @@ export default function ResultsPage() {
                               {row.cqMarks ? ` · CQ ${row.cqMarks}` : ""}
                               {row.mcqMarks ? ` · MCQ ${row.mcqMarks}` : ""}
                               {row.practicalMarks ? ` · ব্যবহারিক ${row.practicalMarks}` : ""}
+                              {row.examDate ? ` · ${row.examDate} ${row.startsAt ?? ""}–${row.endsAt ?? ""}` : " · রুটিন অসম্পূর্ণ"}
                             </small>
                           </span>
                           <DeleteButton
