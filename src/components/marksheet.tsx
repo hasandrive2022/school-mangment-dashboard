@@ -19,7 +19,7 @@ type MarksheetSubject = {
 };
 
 type MarksheetData = {
-  school?: ReceiptSchool | null;
+  school?: (ReceiptSchool & { logoUrl?: string | null }) | null;
   student: {
     nameBn: string;
     nameEn?: string;
@@ -30,7 +30,13 @@ type MarksheetData = {
     registrationNumber?: string;
     fatherNameBn?: string;
   };
-  exam: { nameBn: string; isPublished?: boolean };
+  exam: {
+    nameBn: string;
+    isPublished?: boolean;
+    headteacherSignatureUrl?: string | null;
+    preparedByTeacherNameBn?: string | null;
+    preparedBySignatureUrl?: string | null;
+  };
   result: {
     totalMarks?: number;
     gpa?: string | number;
@@ -53,6 +59,11 @@ export async function printMarksheetSheet() {
 
   try {
     await document.fonts.ready;
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll<HTMLImageElement>(".marksheet-sheet img"),
+      ).map((image) => image.decode().catch(() => undefined)),
+    );
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => resolve());
@@ -97,8 +108,13 @@ export function MarksheetSheet({ data }: { data: MarksheetData }) {
     >
       <div className="marksheet-top-rule" aria-hidden="true" />
       <header className="marksheet-header">
-        <div className="marksheet-school-mark" aria-hidden="true">
-          {schoolName.slice(0, 1)}
+        <div className="marksheet-school-mark">
+          {data.school?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={data.school.logoUrl} alt={`${schoolName} লোগো`} />
+          ) : (
+            <span aria-hidden="true">{schoolName.slice(0, 1)}</span>
+          )}
         </div>
         <div className="marksheet-school-copy">
           <span className="marksheet-kicker">ACADEMIC RECORD</span>
@@ -278,20 +294,47 @@ export function MarksheetSheet({ data }: { data: MarksheetData }) {
         </span>
       </div>
 
-      <footer className="marksheet-signatures">
+      <footer className="marksheet-signatures" aria-label="অনুমোদন ও স্বাক্ষর">
         <div>
           <small>CLASS TEACHER</small>
-          <span className="marksheet-signature-space" aria-hidden="true" />
-          <strong>শ্রেণি শিক্ষকের স্বাক্ষর</strong>
+          <div className="marksheet-signature-space">
+            {data.exam.preparedBySignatureUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={data.exam.preparedBySignatureUrl}
+                alt={`${data.exam.preparedByTeacherNameBn || "শ্রেণি শিক্ষকের"} স্বাক্ষর`}
+              />
+            ) : (
+              <span aria-hidden="true">স্বাক্ষরের স্থান</span>
+            )}
+          </div>
+          <strong>শ্রেণি শিক্ষক / প্রস্তুতকারী</strong>
+          {data.exam.preparedByTeacherNameBn && (
+            <span className="marksheet-signature-name">
+              {data.exam.preparedByTeacherNameBn}
+            </span>
+          )}
         </div>
         <div>
           <small>EXAM CONTROLLER</small>
-          <span className="marksheet-signature-space" aria-hidden="true" />
+          <div className="marksheet-signature-space">
+            <span aria-hidden="true">স্বাক্ষরের স্থান</span>
+          </div>
           <strong>পরীক্ষা নিয়ন্ত্রক</strong>
         </div>
         <div>
           <small>HEAD TEACHER</small>
-          <span className="marksheet-signature-space" aria-hidden="true" />
+          <div className="marksheet-signature-space">
+            {data.exam.headteacherSignatureUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={data.exam.headteacherSignatureUrl}
+                alt="প্রধান শিক্ষকের স্বাক্ষর"
+              />
+            ) : (
+              <span aria-hidden="true">স্বাক্ষর ও সিল</span>
+            )}
+          </div>
           <strong>প্রধান শিক্ষকের স্বাক্ষর ও সিল</strong>
         </div>
       </footer>
