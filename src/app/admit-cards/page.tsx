@@ -8,7 +8,7 @@ import {
   Printer,
   Users,
 } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,8 @@ import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useToast } from "@/components/ui/toast";
 import { useAdminSWR } from "@/lib/swr";
 import { bn, bnDate } from "@/lib/format";
+import { apiPatch } from "@/lib/admin-api";
+import { UploadThingField } from "@/components/uploadthing-field";
 
 type ExamOption = { id: string; nameBn: string; classId?: string };
 type AdmitStudent = {
@@ -52,6 +54,10 @@ type AdmitData = {
     nameBn: string;
     startsAt?: string | null;
     endsAt?: string | null;
+    headteacherSignatureUrl?: string | null;
+    preparedByTeacherId?: string | null;
+    preparedByTeacherNameBn?: string | null;
+    preparedBySignatureUrl?: string | null;
   };
   classNameBn: string;
   subjects: Array<{ code?: string | null; nameBn: string }>;
@@ -69,11 +75,18 @@ function AdmitCardsInner() {
   const [sectionFilter, setSectionFilter] = useState("");
   const [perPage, setPerPage] = useState("1");
   const [instructions, setInstructions] = useState(DEFAULT_INSTRUCTIONS);
+  const [headteacherSignatureUrl, setHeadteacherSignatureUrl] = useState("");
+  const [preparedByTeacherId, setPreparedByTeacherId] = useState("");
+  const [preparedBySignatureUrl, setPreparedBySignatureUrl] = useState("");
+  const [savingSignatures, setSavingSignatures] = useState(false);
 
   const { data: examsPayload } = useAdminSWR<{ data: ExamOption[] }>(
     "/api/backend/results/exams",
   );
   const exams = examsPayload?.data ?? [];
+  const { data: teachersPayload } = useAdminSWR<{ data?: Array<{ id: string; nameBn?: string; displayNameBn?: string }> }>(
+    "/api/backend/people/teachers",
+  );
   const admitKey = examId
     ? `/api/backend/results/exams/${encodeURIComponent(examId)}/admit-data`
     : null;
@@ -83,6 +96,7 @@ function AdmitCardsInner() {
     isLoading,
   } = useAdminSWR<{ data: AdmitData }>(admitKey);
   const data = admitPayload?.data ?? null;
+  const teachers = teachersPayload?.data ?? [];
   const loading = Boolean(examId) && isLoading;
   const loadError = admitError
     ? admitError instanceof Error
@@ -124,6 +138,27 @@ function AdmitCardsInner() {
     address: "",
     logoUrl: null,
   };
+  useEffect(() => {
+    if (!data) return;
+    setHeadteacherSignatureUrl(data.exam.headteacherSignatureUrl ?? "");
+    setPreparedBySignatureUrl(data.exam.preparedBySignatureUrl ?? "");
+    setPreparedByTeacherId(data.exam.preparedByTeacherId ?? "");
+  }, [data]);
+
+  async function saveSignatures() {
+    if (!examId || savingSignatures) return;
+    setSavingSignatures(true);
+    try {
+      await apiPatch(`/api/backend/results/exams/${encodeURIComponent(examId)}`, {
+        value: { headteacherSignatureUrl: headteacherSignatureUrl || null, preparedByTeacherId: preparedByTeacherId || null, preparedBySignatureUrl: preparedBySignatureUrl || null },
+      });
+      toast.success("দুইটি স্বাক্ষর সংরক্ষণ হয়েছে");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "স্বাক্ষর সংরক্ষণ করা যায়নি");
+    } finally {
+      setSavingSignatures(false);
+    }
+  }
   const period =
     data?.exam.startsAt || data?.exam.endsAt
       ? `${data.exam.startsAt ? bnDate(data.exam.startsAt) : ""}${data.exam.endsAt ? ` — ${bnDate(data.exam.endsAt)}` : ""}`
@@ -298,6 +333,36 @@ function AdmitCardsInner() {
               onChange={(event) => setInstructions(event.target.value)}
             />
           </div>
+
+          {data ? (
+            <div className="admit-signature-setup">
+              <div>
+                <label className="admit-field-label">প্রধান শিক্ষকের স্বাক্ষর</label>
+                <UploadThingField
+                  endpoint="signatureImage"
+                  value={headteacherSignatureUrl}
+                  onChange={setHeadteacherSignatureUrl}
+                  label="স্বাক্ষর আপলোড করুন"
+                />
+              </div>
+              <div>
+                <label className="admit-field-label" htmlFor="prepared-by-teacher">প্রস্তুতকারী শিক্ষক</label>
+                <Select id="prepared-by-teacher" value={preparedByTeacherId} onChange={(event) => setPreparedByTeacherId(event.target.value)}>
+                  <option value="">শিক্ষক বেছে নিন</option>
+                  {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.nameBn ?? teacher.displayNameBn ?? "শিক্ষক"}</option>)}
+                </Select>
+                <UploadThingField
+                  endpoint="signatureImage"
+                  value={preparedBySignatureUrl}
+                  onChange={setPreparedBySignatureUrl}
+                  label="প্রস্তুতকারী শিক্ষকের স্বাক্ষর আপলোড করুন"
+                />
+              </div>
+              <Button type="button" variant="outline" disabled={savingSignatures || !preparedByTeacherId} onClick={() => void saveSignatures()}>
+                {savingSignatures ? "সংরক্ষণ হচ্ছে…" : "স্বাক্ষর সংরক্ষণ করুন"}
+              </Button>
+            </div>
+          ) : null}
 
           <div className="admit-config-footer">
             <div className="admit-student-count" aria-live="polite">
@@ -535,8 +600,8 @@ function AdmitCardsInner() {
                       ) : null}
 
                       <footer className="admit-signs">
-                        <span>শ্রেণি শিক্ষকের স্বাক্ষর</span>
-                        <span>প্রধান শিক্ষকের স্বাক্ষর ও সিল</span>
+                        <span>{data.exam.preparedBySignatureUrl ? <img src={data.exam.preparedBySignatureUrl} alt="প্রস্তুতকারী শিক্ষকের স্বাক্ষর" /> : null}<b>প্রস্তুতকারী শিক্ষক</b><small>{data.exam.preparedByTeacherNameBn ?? "স্বাক্ষর"}</small></span>
+                        <span>{data.exam.headteacherSignatureUrl ? <img src={data.exam.headteacherSignatureUrl} alt="প্রধান শিক্ষকের স্বাক্ষর" /> : null}<b>প্রধান শিক্ষক</b><small>স্বাক্ষর ও সিল</small></span>
                       </footer>
                     </article>
                   ))}

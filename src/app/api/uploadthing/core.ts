@@ -12,6 +12,9 @@ export const uploadRouter = {
   profileImage: f({
     image: { maxFileSize: "8MB", maxFileCount: 1 },
   }).onUploadComplete(async ({ file }) => ({ url: file.ufsUrl ?? file.url })),
+  signatureImage: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  }).onUploadComplete(async ({ file }) => ({ url: file.ufsUrl ?? file.url })),
   downloadFile: f({
     blob: { maxFileSize: "16MB", maxFileCount: 1 },
   }).onUploadComplete(async ({ file }) => ({ url: file.ufsUrl ?? file.url })),
