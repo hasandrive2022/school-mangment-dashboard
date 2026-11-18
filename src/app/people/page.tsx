@@ -28,6 +28,10 @@ import {
   type ReceiptData,
   type ReceiptSchool,
 } from "@/components/finance/receipt";
+import {
+  MarksheetSheet,
+  printMarksheetSheet,
+} from "@/components/marksheet";
 
 type Row = Record<string, unknown> & { id: string };
 
@@ -235,6 +239,9 @@ export default function PeoplePage() {
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [resultsFor, setResultsFor] = useState<string | null>(null);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
+  const [printingMarksheetId, setPrintingMarksheetId] = useState<string | null>(
+    null,
+  );
   const [attendance, setAttendance] = useState<AttendanceData | null>(null);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [attendanceFor, setAttendanceFor] = useState<string | null>(null);
@@ -340,6 +347,17 @@ export default function PeoplePage() {
       setResultsError(
         error instanceof Error ? error.message : "ফলাফল লোড করা যায়নি",
       );
+    }
+  }
+
+  async function printStudentMarksheet(resultId: string) {
+    setPrintingMarksheetId(resultId);
+    try {
+      await printMarksheetSheet();
+    } catch {
+      toast.error("নম্বরপত্র প্রিন্ট করা যায়নি। আবার চেষ্টা করুন।");
+    } finally {
+      setPrintingMarksheetId(null);
     }
   }
 
@@ -1526,11 +1544,6 @@ export default function PeoplePage() {
             !resultsError &&
             results !== null &&
             results.map((entry) => {
-              const hasCq = entry.subjects.some((s) => (s.cqMarks ?? 0) > 0);
-              const hasMcq = entry.subjects.some((s) => (s.mcqMarks ?? 0) > 0);
-              const hasPractical = entry.subjects.some(
-                (s) => (s.practicalMarks ?? 0) > 0,
-              );
               const expanded = expandedExam === entry.result.id;
               return (
                 <div className="card flush" key={entry.result.id}>
@@ -1580,79 +1593,68 @@ export default function PeoplePage() {
                       </b>
                     </span>
                   </div>
-                  {expanded &&
-                    (entry.subjects.length === 0 ? (
-                      <p
-                        className="admin-empty"
-                        style={{ margin: "0 18px 18px" }}
-                      >
-                        এই পরীক্ষার বিষয়ভিত্তিক নম্বর পাওয়া যায়নি।
-                      </p>
-                    ) : (
-                      <div className="tw">
-                        <table className="tbl">
-                          <thead>
-                            <tr>
-                              <th>বিষয়</th>
-                              {hasCq && <th className="r">সৃজনশীল</th>}
-                              {hasMcq && <th className="r">বহুনির্বাচনি</th>}
-                              {hasPractical && <th className="r">ব্যবহারিক</th>}
-                              <th className="r">মোট</th>
-                              <th className="r">পূর্ণমান</th>
-                              <th>গ্রেড</th>
-                              <th className="r">GPA</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {entry.subjects.map((subject, index) => (
-                              <tr key={index}>
-                                <td className="b">
-                                  {subject.nameBn ?? "বিষয়"}
-                                </td>
-                                {hasCq && (
-                                  <td className="r num">
-                                    {subject.cq === null ||
-                                    subject.cq === undefined
-                                      ? "—"
-                                      : bnNum(subject.cq)}
-                                  </td>
-                                )}
-                                {hasMcq && (
-                                  <td className="r num">
-                                    {subject.mcq === null ||
-                                    subject.mcq === undefined
-                                      ? "—"
-                                      : bnNum(subject.mcq)}
-                                  </td>
-                                )}
-                                {hasPractical && (
-                                  <td className="r num">
-                                    {subject.practical === null ||
-                                    subject.practical === undefined
-                                      ? "—"
-                                      : bnNum(subject.practical)}
-                                  </td>
-                                )}
-                                <td className="r num">
-                                  {subject.isAbsent ? (
-                                    <span className="chip r">অনুপস্থিত</span>
-                                  ) : (
-                                    bnNum(Number(subject.totalMarks ?? 0))
-                                  )}
-                                </td>
-                                <td className="r num">
-                                  {bnNum(Number(subject.fullMarks ?? 0))}
-                                </td>
-                                <td>{subject.letter ?? "—"}</td>
-                                <td className="r num">
-                                  {bn(String(subject.gpa ?? "—"))}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                  {expanded && (
+                    <div className="marksheet-preview-wrap">
+                      <div className="marksheet-preview-toolbar no-print">
+                        <div>
+                          <strong>নম্বরপত্রের প্রিভিউ</strong>
+                          <span>প্রিন্ট ডায়ালগে “Save as PDF” বেছে নিন</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="btn gho sm marksheet-print-button"
+                          disabled={
+                            printingMarksheetId !== null ||
+                            entry.subjects.length === 0
+                          }
+                          onClick={() => void printStudentMarksheet(entry.result.id)}
+                        >
+                          <Printer className="ic" data-icon="inline-start" />
+                          {printingMarksheetId === entry.result.id
+                            ? "প্রস্তুত হচ্ছে…"
+                            : "প্রিন্ট / PDF"}
+                        </Button>
                       </div>
-                    ))}
+                      {entry.subjects.length === 0 ? (
+                        <p className="admin-empty">
+                          এই পরীক্ষার বিষয়ভিত্তিক নম্বর পাওয়া যায়নি।
+                        </p>
+                      ) : (
+                        <MarksheetSheet
+                          data={{
+                            school,
+                            student: {
+                              nameBn: show(profile.displayNameBn ?? profile.nameBn),
+                              nameEn:
+                                show(profile.nameEn) === "—"
+                                  ? undefined
+                                  : show(profile.nameEn),
+                              classNameBn: show(profile.classNameBn),
+                              sectionNameBn: show(profile.sectionNameBn),
+                              sessionName: show(
+                                entry.sessionName ?? profile.sessionName,
+                              ),
+                              roll: show(profile.roll),
+                              registrationNumber: show(
+                                profile.registrationNumber,
+                              ),
+                              fatherNameBn: show(
+                                profile.fatherNameBn ?? profile.fatherName,
+                              ),
+                            },
+                            exam: {
+                              nameBn: entry.exam.nameBn ?? "পরীক্ষা",
+                              isPublished: entry.exam.isPublished,
+                            },
+                            result: entry.result,
+                            subjects: entry.subjects,
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

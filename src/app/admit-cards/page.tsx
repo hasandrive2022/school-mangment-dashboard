@@ -600,8 +600,38 @@ function AdmitCardsInner() {
                       ) : null}
 
                       <footer className="admit-signs">
-                        <span>{data.exam.preparedBySignatureUrl ? <img src={data.exam.preparedBySignatureUrl} alt="প্রস্তুতকারী শিক্ষকের স্বাক্ষর" /> : null}<b>প্রস্তুতকারী শিক্ষক</b><small>{data.exam.preparedByTeacherNameBn ?? "স্বাক্ষর"}</small></span>
-                        <span>{data.exam.headteacherSignatureUrl ? <img src={data.exam.headteacherSignatureUrl} alt="প্রধান শিক্ষকের স্বাক্ষর" /> : null}<b>প্রধান শিক্ষক</b><small>স্বাক্ষর ও সিল</small></span>
+                        <div className="admit-signature-item">
+                          <div className="admit-signature-mark">
+                            {data.exam.preparedBySignatureUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={data.exam.preparedBySignatureUrl}
+                                alt="প্রস্তুতকারী শিক্ষকের স্বাক্ষর"
+                              />
+                            ) : (
+                              <span>স্বাক্ষরের স্থান</span>
+                            )}
+                          </div>
+                          <b>প্রস্তুতকারী শিক্ষক</b>
+                          <small>
+                            {data.exam.preparedByTeacherNameBn ?? "অনুমোদিত স্বাক্ষর"}
+                          </small>
+                        </div>
+                        <div className="admit-signature-item">
+                          <div className="admit-signature-mark">
+                            {data.exam.headteacherSignatureUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={data.exam.headteacherSignatureUrl}
+                                alt="প্রধান শিক্ষকের স্বাক্ষর"
+                              />
+                            ) : (
+                              <span>স্বাক্ষরের স্থান</span>
+                            )}
+                          </div>
+                          <b>প্রধান শিক্ষক</b>
+                          <small>স্বাক্ষর ও সিল</small>
+                        </div>
                       </footer>
                     </article>
                   ))}
