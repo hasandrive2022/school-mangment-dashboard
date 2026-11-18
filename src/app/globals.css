@@ -1112,6 +1112,13 @@ main.min-h-screen.bg-neutral-50 select {
   size: A4 portrait;
   margin: 0;
 }
+.document-print-root {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 210mm;
+  pointer-events: none;
+}
 @media print {
   .admin-chrome-sidebar,
   .admin-chrome-topbar,
@@ -1146,15 +1153,27 @@ main.min-h-screen.bg-neutral-50 select {
     display: block;
   }
   body.printing-marksheet {
+    display: block !important;
+    width: 210mm !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
   }
+  body.printing-marksheet > :not(.document-print-root) {
+    display: none !important;
+  }
+  body.printing-marksheet > .document-print-root {
+    position: static !important;
+    display: block !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+  }
   body.printing-marksheet * {
     visibility: hidden !important;
   }
-  body.printing-marksheet .admin-chrome-sidebar,
-  body.printing-marksheet .admin-chrome-topbar,
   body.printing-marksheet .no-print {
     display: none !important;
   }
@@ -1164,9 +1183,9 @@ main.min-h-screen.bg-neutral-50 select {
   }
   body.printing-marksheet .marksheet-sheet {
     page: marksheet;
-    position: fixed !important;
-    inset: 0 auto auto 0 !important;
-    z-index: 2147483647;
+    position: relative !important;
+    inset: auto !important;
+    z-index: auto;
     box-sizing: border-box !important;
     width: 210mm !important;
     max-width: none !important;
@@ -1181,10 +1200,6 @@ main.min-h-screen.bg-neutral-50 select {
     background: #fff !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-  }
-  body.printing-marksheet .marksheet-preview-wrap {
-    gap: 0 !important;
-    padding: 0 !important;
   }
   body.printing-marksheet .marksheet-student-section,
   body.printing-marksheet .marksheet-performance,
@@ -1326,6 +1341,20 @@ main.min-h-screen.bg-neutral-50 select {
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
+  }
+  body.printing-admit > :not(.document-print-root) {
+    display: none !important;
+  }
+  body.printing-admit > .document-print-root {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+  }
+  body.printing-admit .document-print-root * {
+    visibility: visible !important;
   }
   body.printing-admit .dadmin .side,
   body.printing-admit .dadmin .topbar,

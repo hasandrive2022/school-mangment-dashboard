@@ -24,6 +24,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAdminSWR } from "@/lib/swr";
 import { bn, bnDate } from "@/lib/format";
 import { apiPatch } from "@/lib/admin-api";
+import { printElement } from "@/lib/print";
 import { UploadThingField } from "@/components/uploadthing-field";
 
 type ExamOption = { id: string; nameBn: string; classId?: string };
@@ -170,36 +171,12 @@ function AdmitCardsInner() {
     if (!students.length || printing) return;
 
     setPrinting(true);
-    document.body.classList.add("printing-admit");
-
-    const cleanup = () => {
-      document.body.classList.remove("printing-admit");
-      setPrinting(false);
-    };
-
-    window.addEventListener("afterprint", cleanup, { once: true });
-
     try {
-      await document.fonts.ready;
-      const images = Array.from(
-        document.querySelectorAll<HTMLImageElement>(".admit-sheet img"),
-      );
-      await Promise.race([
-        Promise.all(
-          images.map((image) => image.decode().catch(() => undefined)),
-        ),
-        new Promise<void>((resolve) => window.setTimeout(resolve, 3500)),
-      ]);
-      await new Promise<void>((resolve) => {
-        window.requestAnimationFrame(() =>
-          window.requestAnimationFrame(() => resolve()),
-        );
-      });
-      window.print();
+      await printElement(".admit-sheet", "printing-admit");
     } catch {
-      window.removeEventListener("afterprint", cleanup);
-      cleanup();
       toast.error("প্রিন্ট ডায়ালগ খোলা যায়নি");
+    } finally {
+      setPrinting(false);
     }
   }
 

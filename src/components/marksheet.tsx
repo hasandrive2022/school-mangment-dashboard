@@ -1,6 +1,7 @@
 "use client";
 
 import { bn, bnNum } from "@/lib/format";
+import { printElement } from "@/lib/print";
 import type { ReceiptSchool } from "@/components/finance/receipt";
 
 type MarksheetSubject = {
@@ -48,33 +49,7 @@ type MarksheetData = {
 };
 
 export async function printMarksheetSheet() {
-  document.body.classList.add("printing-marksheet");
-
-  const clearPrintState = () => {
-    window.removeEventListener("afterprint", clearPrintState);
-    document.body.classList.remove("printing-marksheet");
-  };
-
-  window.addEventListener("afterprint", clearPrintState, { once: true });
-
-  try {
-    await document.fonts.ready;
-    await Promise.all(
-      Array.from(
-        document.querySelectorAll<HTMLImageElement>(".marksheet-sheet img"),
-      ).map((image) => image.decode().catch(() => undefined)),
-    );
-    await new Promise<void>((resolve) => {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => resolve());
-      });
-    });
-    window.print();
-    window.setTimeout(clearPrintState, 1500);
-  } catch (error) {
-    clearPrintState();
-    throw error;
-  }
+  await printElement(".marksheet-sheet", "printing-marksheet");
 }
 
 export function MarksheetSheet({ data }: { data: MarksheetData }) {
