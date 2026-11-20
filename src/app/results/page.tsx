@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useToast } from "@/components/ui/toast";
-import { apiDelete, apiGet, apiPost } from "@/lib/admin-api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/admin-api";
 
 type Scale = {
   id: string;
@@ -74,15 +73,22 @@ export default function ResultsPage() {
     examDate: "",
   });
   const [newScale, setNewScale] = useState(emptyScale);
-  const [processClass, setProcessClass] = useState("");
-  const [message, setMessage] = useState("");
+  const [processClassByExam, setProcessClassByExam] = useState<Record<string, string>>({});
+  const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
+  const [bulkPublishing, setBulkPublishing] = useState(false);
   async function load() {
-    const [scales, examsResponse] = await Promise.all([
-      fetch("/api/backend/results/grading-scales"),
-      fetch("/api/backend/results/exams"),
-    ]);
-    setScale(((await scales.json()) as { data?: Scale[] }).data ?? []);
-    setExams(((await examsResponse.json()) as { data?: Exam[] }).data ?? []);
+    try {
+      const [scales, examsResponse] = await Promise.all([
+        apiGet<{ data?: Scale[] }>("/api/backend/results/grading-scales"),
+        apiGet<{ data?: Exam[] }>("/api/backend/results/exams"),
+      ]);
+      setScale(scales.data ?? []);
+      setExams(examsResponse.data ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ফলাফল তথ্য লোড করা যায়নি");
+      setScale([]);
+      setExams([]);
+    }
   }
   async function loadExamSubjects(examId: string) {
     setExamSubjectExamId(examId);
@@ -102,6 +108,22 @@ export default function ResultsPage() {
     }
   }
   async function addExamSubject() {
+    if (
+      !examSubjectExamId ||
+      !examSubjectForm.subjectId ||
+      !examSubjectForm.fullMarks ||
+      !examSubjectForm.passMarks ||
+      !examSubjectForm.examDate ||
+      !examSubjectForm.startsAt ||
+      !examSubjectForm.endsAt
+    ) {
+      toast.error("বিষয়, পূর্ণমান, পাস নম্বর, তারিখ ও সময় পূরণ করুন");
+      return;
+    }
+    if (examSubjects?.some((row) => row.subjectId === examSubjectForm.subjectId)) {
+      toast.error("এই বিষয়টি পরীক্ষায় ইতিমধ্যে যোগ করা হয়েছে");
+      return;
+    }
     try {
       await apiPost(
         "/api/backend/results/exam-subjects",
@@ -150,48 +172,68 @@ export default function ResultsPage() {
     return () => window.clearTimeout(timer);
   }, []);
   async function createExam() {
-    const response = await fetch("/api/backend/results/exams", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: { ...form, failAnySubject: true } }),
-    });
-    setMessage(response.ok ? "পরীক্ষা তৈরি হয়েছে" : "পরীক্ষা তৈরি করা যায়নি");
-    if (response.ok) {
+    if (!form.nameBn || !form.classId || !form.sessionId) {
+      toast.error("পরীক্ষার নাম, শ্রেণি ও সেশন পূরণ করুন");
+      return;
+    }
+    try {
+      await apiPost("/api/backend/results/exams", {
+        value: { ...form, failAnySubject: true },
+      }, "পরীক্ষা তৈরি করা যায়নি");
       setForm({ nameBn: "", classId: "", sessionId: "", examDate: "" });
       await load();
+      toast.success("পরীক্ষা তৈরি হয়েছে");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "পরীক্ষা তৈরি করা যায়নি");
     }
   }
   async function addScale() {
-    const response = await fetch("/api/backend/results/grading-scales", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    if (!newScale.minMarks || !newScale.maxMarks || !newScale.letter || !newScale.gpa) {
+      toast.error("Min, Max, Letter ও GPA পূরণ করুন");
+      return;
+    }
+    try {
+      await apiPost("/api/backend/results/grading-scales", {
         value: {
           minMarks: Number(newScale.minMarks),
           maxMarks: Number(newScale.maxMarks),
           letter: newScale.letter,
           gpa: Number(newScale.gpa),
         },
-      }),
-    });
-    setMessage(
-      response.ok
-        ? "গ্রেডিং স্কেল সংরক্ষিত হয়েছে"
-        : "স্কেল overlap/gap যাচাই করুন",
-    );
-    if (response.ok) {
+      }, "গ্রেডিং স্কেল সংরক্ষণ করা যায়নি");
       setNewScale(emptyScale);
       await load();
+      toast.success("গ্রেডিং স্কেল সংরক্ষিত হয়েছে");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "গ্রেডিং স্কেল সংরক্ষণ করা যায়নি");
     }
   }
   async function publish(id: string) {
-    const response = await fetch(`/api/backend/results/exams/${id}/publish`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    setMessage(response.ok ? "ফলাফল প্রকাশিত হয়েছে" : "প্রকাশ করা যায়নি");
-    await load();
+    try {
+      await apiPatch(`/api/backend/results/exams/${id}/publish`, {}, "ফলাফল প্রকাশ করা যায়নি");
+      toast.success("ফলাফল প্রকাশিত হয়েছে");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ফলাফল প্রকাশ করা যায়নি");
+    }
+  }
+  async function publishSelected() {
+    if (!selectedExamIds.length || bulkPublishing) return;
+    setBulkPublishing(true);
+    try {
+      await apiPost(
+        "/api/backend/results/exams/publish-bulk",
+        { examIds: selectedExamIds },
+        "নির্বাচিত ফলাফল প্রকাশ করা যায়নি",
+      );
+      toast.success(`${selectedExamIds.length}টি শ্রেণির ফলাফল Portal-এ প্রকাশিত হয়েছে`);
+      setSelectedExamIds([]);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "নির্বাচিত ফলাফল প্রকাশ করা যায়নি");
+    } finally {
+      setBulkPublishing(false);
+    }
   }
   async function sendResultSms(id: string) {
     try {
@@ -209,15 +251,22 @@ export default function ResultsPage() {
     }
   }
   async function process(id: string) {
-    const response = await fetch(
-      `/api/backend/results/exams/${id}/process/${processClass}`,
-      { method: "POST" },
-    );
-    setMessage(
-      response.ok
-        ? "ফলাফল প্রসেস হয়েছে; পুনরায় চালালেও duplicate হবে না"
-        : "পরীক্ষা ও শ্রেণি নির্বাচন ঠিক আছে কি না যাচাই করুন",
-    );
+    const processClass = processClassByExam[id] ?? "";
+    if (!processClass) {
+      toast.error("ফলাফল প্রসেস করার আগে ওই পরীক্ষার শ্রেণি নির্বাচন করুন");
+      return;
+    }
+    try {
+      await apiPost(
+        `/api/backend/results/exams/${id}/process/${processClass}`,
+        {},
+        "ফলাফল প্রসেস করা যায়নি",
+      );
+      toast.success("ফলাফল প্রসেস হয়েছে; পুনরায় চালালেও duplicate হবে না");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ফলাফল প্রসেস করা যায়নি");
+    }
   }
   return (
     <div className="dstack">
@@ -230,7 +279,7 @@ export default function ResultsPage() {
         </div>
         <div className="results-layout">
           <section>
-            <Card className="card">
+            <Card className="card" id="exam-list">
               <CardHeader>
                 <CardTitle>পরীক্ষা ফর্ম — নতুন পরীক্ষা</CardTitle>
               </CardHeader>
@@ -270,9 +319,23 @@ export default function ResultsPage() {
                 </Button>
               </CardContent>
             </Card>
-            <Card className="card">
+            <Card className="card" id="exam-subjects">
               <CardHeader>
-                <CardTitle>পরীক্ষাসমূহ</CardTitle>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <CardTitle>পরীক্ষাসমূহ</CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!selectedExamIds.length || bulkPublishing}
+                    onClick={() => void publishSelected()}
+                  >
+                    {bulkPublishing
+                      ? "প্রকাশ হচ্ছে…"
+                      : selectedExamIds.length
+                        ? `${selectedExamIds.length}টি নির্বাচিত ফলাফল প্রকাশ করুন`
+                        : "নির্বাচিত ফলাফল প্রকাশ করুন"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {exams === null ? (
@@ -280,18 +343,43 @@ export default function ResultsPage() {
                 ) : exams.length ? (
                   exams.map((exam) => (
                     <article className="exam-row" key={exam.id}>
-                      <div>
-                        <b>{exam.nameBn}</b>
-                        <small>
-                          {exam.examDate ?? "তারিখ নেই"} ·{" "}
-                          {classOptions.find((row) => row.id === exam.classId)?.nameBn ?? "শ্রেণি নেই"}
-                        </small>
+                      <div className="flex min-w-0 items-start gap-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`${exam.nameBn} নির্বাচন করুন`}
+                          checked={selectedExamIds.includes(exam.id)}
+                          disabled={exam.isPublished || bulkPublishing}
+                          onChange={(event) =>
+                            setSelectedExamIds((current) =>
+                              event.target.checked
+                                ? [...current, exam.id]
+                                : current.filter((id) => id !== exam.id),
+                            )
+                          }
+                        />
+                        <div>
+                          <b>{exam.nameBn}</b>
+                          <small>
+                            {exam.examDate ?? "তারিখ নেই"} ·{" "}
+                            {classOptions.find((row) => row.id === exam.classId)?.nameBn ?? "শ্রেণি নেই"}
+                          </small>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
                         <Badge
                           variant={exam.isPublished ? "success" : "secondary"}
+                          className="whitespace-nowrap"
                         >
                           {exam.isPublished ? "প্রকাশিত" : "খসড়া"}
+                        </Badge>
+                        <Badge
+                          variant={exam.isPublished ? "success" : "secondary"}
+                          className="whitespace-nowrap"
+                          title="এই status অনুযায়ী Portal-এ ফলাফল দেখা যায়"
+                        >
+                          {exam.isPublished
+                            ? "Portal-এ দেখা যাচ্ছে"
+                            : "Portal-এ দেখা যাচ্ছে না"}
                         </Badge>
                         <Button
                           size="sm"
@@ -311,19 +399,22 @@ export default function ResultsPage() {
                             রেজাল্ট SMS
                           </Button>
                         ) : null}
-                        <Link
-                          className="btn gho sm"
-                          href={`/dashboard/admit-cards?examId=${exam.id}`}
-                        >
-                          প্রবেশপত্র
-                        </Link>
-                        <Select className="sel w-32"
-                          value={processClass}
+                        <Select className="sel w-full sm:w-32"
+                          value={processClassByExam[exam.id] ?? ""}
                           onChange={(event) =>
-                            setProcessClass(event.target.value)
+                            setProcessClassByExam((current) => ({
+                              ...current,
+                              [exam.id]: event.target.value,
+                            }))
                           }>
                           <option value="">শ্রেণি নির্বাচন</option>
-                          {classOptions.map((row) => <option key={row.id} value={row.id}>{row.nameBn ?? row.name ?? "শ্রেণি"}</option>)}
+                          {classOptions
+                            .filter((row) => row.id === exam.classId)
+                            .map((row) => (
+                              <option key={row.id} value={row.id}>
+                                {row.nameBn ?? row.name ?? "শ্রেণি"}
+                              </option>
+                            ))}
                         </Select>
                         <Button size="sm" className="btn sm" onClick={() => void process(exam.id)}>
                           Process
@@ -498,7 +589,6 @@ export default function ResultsPage() {
             </Card>
           </section>
         </div>
-        {message && <p className="alert g">{message}</p>}
     </div>
   );
 }

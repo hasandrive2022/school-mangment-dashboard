@@ -5,11 +5,18 @@ export async function adminFetcher<T>(url: string): Promise<T> {
     credentials: "include",
     cache: "no-store",
   });
-  const payload = (await response.json().catch(() => null)) as T;
+  const payload = (await response.json().catch(() => null)) as
+    | (T & {
+        message?: string | string[];
+      })
+    | null;
   if (!response.ok) {
-    throw new Error("ডেটা লোড করা যায়নি");
+    const message = Array.isArray(payload?.message)
+      ? payload.message.join(" ")
+      : payload?.message;
+    throw new Error(message || "ডেটা লোড করা যায়নি");
   }
-  return payload;
+  return payload as T;
 }
 
 export function useAdminSWR<T>(

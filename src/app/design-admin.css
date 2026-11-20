@@ -123,11 +123,11 @@
   color: #9db8cf;
 }
 .dadmin .side nav {
-  padding: 8px 0 14px;
+  padding: 3px 0 8px;
   overflow-y: auto;
 }
 .dadmin .sg {
-  padding: 12px 18px 4px;
+  padding: 6px 18px 2px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
@@ -137,7 +137,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   margin: 1px 10px;
   border-radius: 6px;
   font-size: 14.5px;
@@ -1144,6 +1144,59 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+}
+.dadmin .exam-routine-page .card {
+  overflow: hidden;
+}
+.dadmin .exam-routine-selector .sel {
+  width: min(100%, 520px);
+}
+.dadmin .exam-routine-labels,
+.dadmin .exam-routine-row {
+  display: grid;
+  grid-template-columns: 56px minmax(180px, 1.4fr) minmax(150px, 1fr) minmax(110px, .75fr) minmax(110px, .75fr) 110px;
+  gap: 12px;
+  align-items: center;
+}
+.dadmin .exam-routine-labels {
+  padding: 0 0 8px;
+  color: var(--sub);
+  font-size: 12px;
+  font-weight: 700;
+}
+.dadmin .exam-routine-row {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.dadmin .exam-routine-row strong {
+  color: var(--p800);
+}
+.dadmin .exam-routine-serial {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--p50);
+  color: var(--p700);
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .dadmin .exam-routine-labels { display: none; }
+  .dadmin .exam-routine-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .dadmin .exam-routine-row strong {
+    grid-column: 1 / -1;
+  }
+  .dadmin .exam-routine-row .exam-routine-serial {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .dadmin .exam-routine-row button {
+    width: 100%;
+  }
 }
 .dadmin .dpage-title {
   font-size: 20px;

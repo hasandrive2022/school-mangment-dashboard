@@ -15,6 +15,7 @@ import {
   Users,
   WalletCards,
   Armchair,
+  Building2,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -28,36 +29,61 @@ type SchoolSettings = { data?: { school?: { nameBn?: string } } };
 const adminGroups = [
   { title: "ওভারভিউ", items: [["ড্যাশবোর্ড", "/dashboard", LayoutDashboard]] },
   {
-    title: "একাডেমিক",
+    title: "মানুষ ও ব্যবহারকারী",
     items: [
-      ["শিক্ষার্থী ও শিক্ষক", "/dashboard/people", Users],
+      ["শিক্ষার্থী ও শিক্ষক তালিকা", "/dashboard/people", Users],
+      ["নতুন শিক্ষার্থী যোগ", "/people/students/new", Users],
+      ["শিক্ষার্থী Import", "/people/import", FileText],
+      ["শিক্ষার্থী Promotion", "/people/promotion", Users],
       ["শিক্ষক পাসওয়ার্ড", "/people/teacher-password", Users],
-      ["একাডেমিক কাঠামো", "/dashboard/academics", BookOpen],
-      ["ক্লাস রুটিন", "/dashboard/routine", CalendarDays],
-      ["উপস্থিতি রিপোর্ট", "/dashboard/attendance/reports", CalendarDays],
-      ["পরীক্ষা ও ফলাফল", "/dashboard/results", GraduationCap],
-      ["সিট প্ল্যান", "/dashboard/seat-plans", Armchair],
-      ["রুমসমূহ", "/dashboard/rooms", Armchair],
     ],
   },
   {
-    title: "অর্থ ও ভর্তি",
+    title: "একাডেমিক কাঠামো",
+    items: [
+      ["ক্লাস, শাখা ও বিষয়", "/dashboard/academics", BookOpen],
+      ["ক্লাস রুটিন", "/dashboard/routine", CalendarDays],
+    ],
+  },
+  {
+    title: "উপস্থিতি",
+    items: [
+      ["উপস্থিতি গ্রহণ", "/dashboard/attendance", CalendarDays],
+      ["উপস্থিতি রিপোর্ট", "/dashboard/attendance/reports", CalendarDays],
+    ],
+  },
+  {
+    title: "পরীক্ষা ও ফলাফল",
+    items: [
+      ["পরীক্ষা ও বিষয়", "/dashboard/results", GraduationCap],
+      ["পরীক্ষার রুটিন", "/dashboard/exam-routine", CalendarDays],
+      ["সিট প্ল্যান", "/dashboard/seat-plans", Armchair],
+      ["রুমসমূহ / রুম তৈরি", "/dashboard/rooms", Building2],
+      ["প্রবেশপত্র তৈরি", "/dashboard/admit-cards", FileText],
+      ["নম্বর এন্ট্রি", "/dashboard/marks-entry", GraduationCap],
+    ],
+  },
+  {
+    title: "অর্থ ও হিসাব",
     items: [
       ["ফি ও সংগ্রহ", "/dashboard/finance", CreditCard],
-      ["বেতন", "/dashboard/salary", ClipboardList],
+      ["শিক্ষক বেতন", "/dashboard/salary", ClipboardList],
       ["আয়–ব্যয়", "/dashboard/ledger", FileText],
-      ["রিপোর্ট", "/dashboard/reports", FileText],
-      ["ভর্তি আবেদন", "/dashboard/admissions", ClipboardList],
+      ["আর্থিক রিপোর্ট", "/dashboard/reports", FileText],
     ],
+  },
+  {
+    title: "ভর্তি",
+    items: [["ভর্তি আবেদন দেখা", "/dashboard/admissions", ClipboardList]],
   },
   {
     title: "যোগাযোগ",
     items: [["SMS প্যানেল", "/dashboard/sms", MessageSquare]],
   },
   {
-    title: "ওয়েবসাইট",
+    title: "ওয়েবসাইট ও সেটিংস",
     items: [
-      ["কনটেন্ট", "/dashboard/content", FileText],
+      ["ওয়েবসাইট কনটেন্ট", "/dashboard/content", FileText],
       ["বিদ্যালয়ের সেটিংস", "/dashboard/settings", Settings],
       ["আমার পাসওয়ার্ড", "/settings/password", Settings],
     ],
@@ -71,7 +97,7 @@ const teacherGroups = [
       ["উপস্থিতি গ্রহণ", "/dashboard/attendance", CalendarDays],
       ["নম্বর এন্ট্রি", "/dashboard/marks-entry", GraduationCap],
       ["আমার বেতন", "/dashboard/my-salary", WalletCards],
-      ["আমার প্রোফাইল", "/dashboard/my-profile", Users],
+      ["আমার প্রোফাইল ও রুটিন", "/dashboard/my-profile", Users],
     ],
   },
 ] as const;
@@ -81,6 +107,9 @@ const pageTitles: Array<[string, string]> = [
   ["/people/students", "শিক্ষার্থী"],
   ["/dashboard/people", "শিক্ষার্থী ও শিক্ষক"],
   ["/people", "শিক্ষার্থী ও শিক্ষক"],
+  ["/people/students/new", "নতুন শিক্ষার্থী"],
+  ["/people/import", "শিক্ষার্থী Import"],
+  ["/people/promotion", "শিক্ষার্থী Promotion"],
   ["/dashboard/academics", "একাডেমিক কাঠামো"],
   ["/academics", "একাডেমিক কাঠামো"],
   ["/dashboard/routine", "ক্লাস রুটিন"],
@@ -89,10 +118,16 @@ const pageTitles: Array<[string, string]> = [
   ["/attendance/reports", "উপস্থিতি রিপোর্ট"],
   ["/dashboard/attendance", "উপস্থিতি গ্রহণ"],
   ["/attendance", "উপস্থিতি গ্রহণ"],
+  ["/dashboard/attendance", "উপস্থিতি গ্রহণ"],
+  ["/attendance", "উপস্থিতি গ্রহণ"],
   ["/dashboard/marks-entry", "নম্বর এন্ট্রি"],
   ["/marks-entry", "নম্বর এন্ট্রি"],
   ["/dashboard/results", "পরীক্ষা ও ফলাফল"],
   ["/results", "পরীক্ষা ও ফলাফল"],
+  ["/dashboard/marks-entry", "নম্বর এন্ট্রি"],
+  ["/marks-entry", "নম্বর এন্ট্রি"],
+  ["/dashboard/exam-routine", "পরীক্ষার রুটিন"],
+  ["/exam-routine", "পরীক্ষার রুটিন"],
   ["/dashboard/seat-plans", "সিট প্ল্যান"],
   ["/seat-plans", "সিট প্ল্যান"],
   ["/dashboard/rooms", "রুমসমূহ"],
